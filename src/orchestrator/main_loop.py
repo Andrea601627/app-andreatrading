@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from datetime import datetime, time as dtime
 
@@ -28,6 +29,8 @@ from ..strategy.signals import analyze_ticker
 from ..utils.config import load_config
 from ..utils.db import init_db
 from ..utils.logger import get_logger
+
+_ANALYSIS_WORKERS = 8
 
 log = get_logger()
 
@@ -113,17 +116,28 @@ def run_cycle() -> dict:
     regime = detect_regime()
     log.info(f"Regime mercato: {regime.trend} / vol={regime.volatility} ({regime.annualized_vol_pct}%)")
 
-    # 1) analizza tutti i titoli
+    # 1) analizza tutti i titoli in parallelo
+    all_tickers = tickers()
+    log.info(f"Analisi {len(all_tickers)} titoli con {_ANALYSIS_WORKERS} worker paralleli...")
+    raw_signals: list = []
+    with ThreadPoolExecutor(max_workers=_ANALYSIS_WORKERS) as pool:
+        future_map = {pool.submit(analyze_ticker, t, regime): t for t in all_tickers}
+        for future in as_completed(future_map):
+            t = future_map[future]
+            try:
+                raw_signals.append(future.result())
+            except Exception as e:
+                log.warning(f"Analisi fallita per {t}: {e}")
+
+    # scrittura DB sequenziale (thread-safe)
     signals = []
     price_map: dict[str, float] = {}
-    for t in tickers():
-        sig = analyze_ticker(t, regime=regime)
+    for sig in raw_signals:
         signals.append(sig)
         if sig.last_price:
-            price_map[t] = sig.last_price
-        # logga ogni segnale (incluso quelli con quality_ok=False)
+            price_map[sig.ticker] = sig.last_price
         log_signal(
-            t,
+            sig.ticker,
             sig.decision_short,
             sig.short_medium,
             regime,

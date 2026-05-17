@@ -85,7 +85,7 @@ data_quality:
 # Loop di esecuzione
 # ------------------------------------------------------------
 orchestrator:
-  cycle_interval_seconds: 900       # ogni 15 min (~230 titoli multi-mercato)
+  cycle_interval_seconds: 300       # ogni 5 min (cache storica + analisi parallela)
   market_hours:
     open: "09:00"
     close: "17:30"
