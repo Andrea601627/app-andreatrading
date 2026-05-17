@@ -69,7 +69,7 @@ st.sidebar.title("AndreaTrading")
 st.sidebar.caption(f"Mode: **{cfg['mode'].upper()}**")
 page = st.sidebar.radio(
     "Sezione",
-    ["Azioni consigliate", "Portafoglio", "Storico segnali",
+    ["Azioni consigliate", "Rendimento Mercati", "Portafoglio", "Storico segnali",
      "Trade chiusi & Learning", "Backtest", "Impostazioni"],
 )
 
@@ -118,7 +118,108 @@ if page == "Azioni consigliate":
                     _render_drilldown(row)
 
 # ============================================================
-# Pagina 2: Portafoglio
+# Pagina 2: Rendimento Mercati
+# ============================================================
+elif page == "Rendimento Mercati":
+    st.title("Rendimento per mercato")
+    st.caption("Basato sui prezzi in cache locale — aggiornato ad ogni ciclo del loop lento")
+
+    from src.data.screener import run as screener_run
+    from src.data.universe import load_universe
+
+    universe_map = {a.ticker: a for a in load_universe()}
+
+    with st.spinner("Calcolo rendimenti in corso..."):
+        results = screener_run(top_n=len(universe_map))
+
+    if not results:
+        st.info("Nessun dato in cache. Attendi il primo ciclo del loop lento.")
+    else:
+        rows = []
+        for r in results:
+            asset = universe_map.get(r.ticker)
+            if asset and r.cached:
+                rows.append({
+                    "ticker": r.ticker,
+                    "name": asset.name,
+                    "mercato": asset.market,
+                    "borsa": asset.exchange,
+                    "settore": asset.sector,
+                    "affidabilita": asset.reliability,
+                    "rendimento_5gg_%": round(r.return_5d * 100, 2),
+                    "rendimento_1gg_%": round(r.return_1d * 100, 2),
+                })
+
+        df = pd.DataFrame(rows)
+
+        if df.empty:
+            st.info("Nessun dato disponibile ancora in cache.")
+        else:
+            # --- Riepilogo per mercato ---
+            st.subheader("Riepilogo per mercato")
+            mkt = (df.groupby("mercato")
+                     .agg(
+                         rendimento_medio_5gg=("rendimento_5gg_%", "mean"),
+                         rendimento_max_5gg=("rendimento_5gg_%", "max"),
+                         titoli_positivi=("rendimento_5gg_%", lambda x: (x > 0).sum()),
+                         totale_titoli=("rendimento_5gg_%", "count"),
+                     )
+                     .reset_index()
+                     .sort_values("rendimento_medio_5gg", ascending=False))
+            mkt["rendimento_medio_5gg"] = mkt["rendimento_medio_5gg"].round(2)
+            mkt["rendimento_max_5gg"] = mkt["rendimento_max_5gg"].round(2)
+            mkt["% positivi"] = (mkt["titoli_positivi"] / mkt["totale_titoli"] * 100).round(0).astype(int)
+
+            st.dataframe(mkt, use_container_width=True)
+
+            fig_mkt = px.bar(
+                mkt, x="mercato", y="rendimento_medio_5gg",
+                color="rendimento_medio_5gg",
+                color_continuous_scale=["red", "gray", "green"],
+                color_continuous_midpoint=0,
+                title="Rendimento medio 5 giorni per mercato (%)",
+                labels={"rendimento_medio_5gg": "Rend. medio 5gg (%)"},
+            )
+            st.plotly_chart(fig_mkt, use_container_width=True)
+
+            # --- Riepilogo per settore ---
+            st.subheader("Riepilogo per settore")
+            sec = (df.groupby("settore")
+                     .agg(
+                         rendimento_medio_5gg=("rendimento_5gg_%", "mean"),
+                         totale_titoli=("rendimento_5gg_%", "count"),
+                     )
+                     .reset_index()
+                     .sort_values("rendimento_medio_5gg", ascending=False))
+            sec["rendimento_medio_5gg"] = sec["rendimento_medio_5gg"].round(2)
+
+            fig_sec = px.bar(
+                sec, x="settore", y="rendimento_medio_5gg",
+                color="rendimento_medio_5gg",
+                color_continuous_scale=["red", "gray", "green"],
+                color_continuous_midpoint=0,
+                title="Rendimento medio 5 giorni per settore (%)",
+            )
+            st.plotly_chart(fig_sec, use_container_width=True)
+
+            # --- Top 20 titoli ---
+            st.subheader("Top 20 titoli (rendimento 5 giorni)")
+            top20 = df.nlargest(20, "rendimento_5gg_%")[
+                ["ticker", "name", "mercato", "settore",
+                 "rendimento_5gg_%", "rendimento_1gg_%", "affidabilita"]
+            ]
+            st.dataframe(top20, use_container_width=True)
+
+            # --- Peggiori 20 titoli ---
+            st.subheader("Peggiori 20 titoli (rendimento 5 giorni)")
+            bot20 = df.nsmallest(20, "rendimento_5gg_%")[
+                ["ticker", "name", "mercato", "settore",
+                 "rendimento_5gg_%", "rendimento_1gg_%", "affidabilita"]
+            ]
+            st.dataframe(bot20, use_container_width=True)
+
+# ============================================================
+# Pagina 3: Portafoglio
 # ============================================================
 elif page == "Portafoglio":
     st.title("Portafoglio attuale")
