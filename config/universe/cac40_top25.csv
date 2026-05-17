@@ -1,0 +1,26 @@
+ticker,name,sector,segment,market,exchange,reliability
+MC.PA,LVMH,Consumer Discretionary,CAC 40,Europe,Euronext Paris,medium_high
+TTE.PA,TotalEnergies,Energy,CAC 40,Europe,Euronext Paris,medium_high
+SAN.PA,Sanofi,Healthcare,CAC 40,Europe,Euronext Paris,medium_high
+OR.PA,L'Oreal,Consumer Staples,CAC 40,Europe,Euronext Paris,medium_high
+AI.PA,Air Liquide,Materials,CAC 40,Europe,Euronext Paris,medium_high
+SU.PA,Schneider Electric,Industrials,CAC 40,Europe,Euronext Paris,medium_high
+BN.PA,Danone,Consumer Staples,CAC 40,Europe,Euronext Paris,medium_high
+BNP.PA,BNP Paribas,Financials,CAC 40,Europe,Euronext Paris,medium_high
+DG.PA,Vinci,Industrials,CAC 40,Europe,Euronext Paris,medium_high
+CS.PA,AXA,Financials,CAC 40,Europe,Euronext Paris,medium_high
+RI.PA,Pernod Ricard,Consumer Staples,CAC 40,Europe,Euronext Paris,medium_high
+KER.PA,Kering,Consumer Discretionary,CAC 40,Europe,Euronext Paris,medium_high
+CAP.PA,Capgemini,Technology,CAC 40,Europe,Euronext Paris,medium_high
+DSY.PA,Dassault Systemes,Technology,CAC 40,Europe,Euronext Paris,medium_high
+GLE.PA,Societe Generale,Financials,CAC 40,Europe,Euronext Paris,medium_high
+LR.PA,Legrand,Industrials,CAC 40,Europe,Euronext Paris,medium_high
+ML.PA,Michelin,Consumer Discretionary,CAC 40,Europe,Euronext Paris,medium_high
+PUB.PA,Publicis,Communication Services,CAC 40,Europe,Euronext Paris,medium_high
+RMS.PA,Hermes International,Consumer Discretionary,CAC 40,Europe,Euronext Paris,medium_high
+SG.PA,Saint-Gobain,Materials,CAC 40,Europe,Euronext Paris,medium_high
+VIE.PA,Veolia,Utilities,CAC 40,Europe,Euronext Paris,medium_high
+EN.PA,Bouygues,Industrials,CAC 40,Europe,Euronext Paris,medium_high
+EL.PA,EssilorLuxottica,Healthcare,CAC 40,Europe,Euronext Paris,medium_high
+HO.PA,Thales,Industrials,CAC 40,Europe,Euronext Paris,medium_high
+SW.PA,Sodexo,Consumer Discretionary,CAC 40,Europe,Euronext Paris,medium_high

@@ -1,0 +1,41 @@
+ticker,name,sector,segment,market,exchange,reliability
+ADS.DE,Adidas,Consumer Discretionary,DAX 40,Europe,XETRA,high
+AIR.DE,Airbus,Industrials,DAX 40,Europe,XETRA,high
+ALV.DE,Allianz,Financials,DAX 40,Europe,XETRA,high
+BAS.DE,BASF,Materials,DAX 40,Europe,XETRA,high
+BAYN.DE,Bayer,Healthcare,DAX 40,Europe,XETRA,high
+BEI.DE,Beiersdorf,Consumer Staples,DAX 40,Europe,XETRA,high
+BMW.DE,BMW,Consumer Discretionary,DAX 40,Europe,XETRA,high
+BNR.DE,Brenntag,Materials,DAX 40,Europe,XETRA,high
+CON.DE,Continental,Consumer Discretionary,DAX 40,Europe,XETRA,high
+DB1.DE,Deutsche Boerse,Financials,DAX 40,Europe,XETRA,high
+DBK.DE,Deutsche Bank,Financials,DAX 40,Europe,XETRA,high
+DHL.DE,DHL Group,Industrials,DAX 40,Europe,XETRA,high
+DTE.DE,Deutsche Telekom,Communication Services,DAX 40,Europe,XETRA,high
+EOAN.DE,E.ON,Utilities,DAX 40,Europe,XETRA,high
+ENR.DE,Siemens Energy,Energy,DAX 40,Europe,XETRA,high
+FME.DE,Fresenius Medical Care,Healthcare,DAX 40,Europe,XETRA,high
+FRE.DE,Fresenius,Healthcare,DAX 40,Europe,XETRA,high
+HEI.DE,HeidelbergMaterials,Materials,DAX 40,Europe,XETRA,high
+HEN3.DE,Henkel,Consumer Staples,DAX 40,Europe,XETRA,high
+IFX.DE,Infineon Technologies,Technology,DAX 40,Europe,XETRA,high
+MBG.DE,Mercedes-Benz,Consumer Discretionary,DAX 40,Europe,XETRA,high
+MRK.DE,Merck KGaA,Healthcare,DAX 40,Europe,XETRA,high
+MTX.DE,MTU Aero Engines,Industrials,DAX 40,Europe,XETRA,high
+MUV2.DE,Munich Re,Financials,DAX 40,Europe,XETRA,high
+P911.DE,Porsche AG,Consumer Discretionary,DAX 40,Europe,XETRA,high
+PAH3.DE,Porsche SE,Consumer Discretionary,DAX 40,Europe,XETRA,high
+QGEN.DE,Qiagen,Healthcare,DAX 40,Europe,XETRA,high
+RHM.DE,Rheinmetall,Industrials,DAX 40,Europe,XETRA,high
+RWE.DE,RWE,Utilities,DAX 40,Europe,XETRA,high
+SAP.DE,SAP,Technology,DAX 40,Europe,XETRA,high
+SHL.DE,Siemens Healthineers,Healthcare,DAX 40,Europe,XETRA,high
+SIE.DE,Siemens,Industrials,DAX 40,Europe,XETRA,high
+SRT3.DE,Sartorius,Healthcare,DAX 40,Europe,XETRA,high
+SY1.DE,Symrise,Materials,DAX 40,Europe,XETRA,high
+TKA.DE,ThyssenKrupp,Industrials,DAX 40,Europe,XETRA,high
+VNA.DE,Vonovia,Real Estate,DAX 40,Europe,XETRA,high
+VOW3.DE,Volkswagen,Consumer Discretionary,DAX 40,Europe,XETRA,high
+ZAL.DE,Zalando,Consumer Discretionary,DAX 40,Europe,XETRA,high
+HNR1.DE,Hannover Re,Financials,DAX 40,Europe,XETRA,high
+EVK.DE,Evonik,Materials,DAX 40,Europe,XETRA,high

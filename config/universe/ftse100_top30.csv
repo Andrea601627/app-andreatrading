@@ -1,0 +1,31 @@
+ticker,name,sector,segment,market,exchange,reliability
+SHEL.L,Shell,Energy,FTSE 100,Europe,LSE,high
+AZN.L,AstraZeneca,Healthcare,FTSE 100,Europe,LSE,high
+HSBA.L,HSBC,Financials,FTSE 100,Europe,LSE,high
+ULVR.L,Unilever,Consumer Staples,FTSE 100,Europe,LSE,high
+BP.L,BP,Energy,FTSE 100,Europe,LSE,high
+GSK.L,GSK,Healthcare,FTSE 100,Europe,LSE,high
+RIO.L,Rio Tinto,Materials,FTSE 100,Europe,LSE,high
+BATS.L,British American Tobacco,Consumer Staples,FTSE 100,Europe,LSE,high
+DGE.L,Diageo,Consumer Staples,FTSE 100,Europe,LSE,high
+REL.L,RELX,Industrials,FTSE 100,Europe,LSE,high
+NG.L,National Grid,Utilities,FTSE 100,Europe,LSE,high
+AAL.L,Anglo American,Materials,FTSE 100,Europe,LSE,high
+BHP.L,BHP Group,Materials,FTSE 100,Europe,LSE,high
+IMB.L,Imperial Brands,Consumer Staples,FTSE 100,Europe,LSE,high
+PRU.L,Prudential,Financials,FTSE 100,Europe,LSE,high
+LLOY.L,Lloyds Banking Group,Financials,FTSE 100,Europe,LSE,high
+VOD.L,Vodafone,Communication Services,FTSE 100,Europe,LSE,high
+GLEN.L,Glencore,Materials,FTSE 100,Europe,LSE,high
+CPG.L,Compass Group,Consumer Discretionary,FTSE 100,Europe,LSE,high
+SSE.L,SSE,Utilities,FTSE 100,Europe,LSE,high
+NXT.L,Next,Consumer Discretionary,FTSE 100,Europe,LSE,high
+EXPN.L,Experian,Technology,FTSE 100,Europe,LSE,high
+RKT.L,Reckitt,Consumer Staples,FTSE 100,Europe,LSE,high
+IHG.L,IHG Hotels & Resorts,Consumer Discretionary,FTSE 100,Europe,LSE,high
+LSEG.L,London Stock Exchange Group,Financials,FTSE 100,Europe,LSE,high
+STAN.L,Standard Chartered,Financials,FTSE 100,Europe,LSE,high
+SGE.L,Sage Group,Technology,FTSE 100,Europe,LSE,high
+WPP.L,WPP,Communication Services,FTSE 100,Europe,LSE,high
+BA.L,BAE Systems,Industrials,FTSE 100,Europe,LSE,high
+CNA.L,Centrica,Utilities,FTSE 100,Europe,LSE,high

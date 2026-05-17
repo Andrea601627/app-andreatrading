@@ -235,6 +235,10 @@ elif page == "Impostazioni":
 
     st.subheader("Universo titoli")
     from src.data.universe import load_universe
-    u = pd.DataFrame([{"ticker": a.ticker, "name": a.name, "sector": a.sector}
-                       for a in load_universe()])
+    u = pd.DataFrame([{
+        "ticker": a.ticker, "name": a.name, "sector": a.sector,
+        "mercato": a.market, "borsa": a.exchange,
+        "affidabilita": a.reliability, "size_mult": f"{a.size_multiplier():.0%}",
+    } for a in load_universe()])
+    st.caption(f"Totale: {len(u)} titoli su {u['borsa'].nunique()} borse")
     st.dataframe(u, use_container_width=True)

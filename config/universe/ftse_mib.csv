@@ -1,38 +1,38 @@
-ticker,name,sector,segment
-A2A.MI,A2A,Utilities,FTSE MIB
-AMP.MI,Amplifon,Healthcare,FTSE MIB
-AZM.MI,Azimut Holding,Financial Services,FTSE MIB
-BAMI.MI,Banco BPM,Financials,FTSE MIB
-BMED.MI,Banca Mediolanum,Financials,FTSE MIB
-BMPS.MI,Banca Monte Paschi Siena,Financials,FTSE MIB
-BPE.MI,BPER Banca,Financials,FTSE MIB
-BZU.MI,Buzzi,Materials,FTSE MIB
-CPR.MI,Davide Campari-Milano,Consumer Staples,FTSE MIB
-DIA.MI,Diasorin,Healthcare,FTSE MIB
-ENEL.MI,Enel,Utilities,FTSE MIB
-ENI.MI,Eni,Energy,FTSE MIB
-ERG.MI,ERG,Utilities,FTSE MIB
-FBK.MI,FinecoBank,Financials,FTSE MIB
-G.MI,Assicurazioni Generali,Financials,FTSE MIB
-HER.MI,Hera,Utilities,FTSE MIB
-INW.MI,Inwit,Communication Services,FTSE MIB
-IP.MI,Interpump Group,Industrials,FTSE MIB
-ISP.MI,Intesa Sanpaolo,Financials,FTSE MIB
-LDO.MI,Leonardo,Industrials,FTSE MIB
-MB.MI,Mediobanca,Financials,FTSE MIB
-MONC.MI,Moncler,Consumer Discretionary,FTSE MIB
-NEXI.MI,Nexi,Technology,FTSE MIB
-PIRC.MI,Pirelli & C,Consumer Discretionary,FTSE MIB
-PRY.MI,Prysmian,Industrials,FTSE MIB
-PST.MI,Poste Italiane,Financials,FTSE MIB
-RACE.MI,Ferrari,Consumer Discretionary,FTSE MIB
-REC.MI,Recordati,Healthcare,FTSE MIB
-SPM.MI,Saipem,Energy,FTSE MIB
-SRG.MI,Snam,Utilities,FTSE MIB
-STLAM.MI,Stellantis,Consumer Discretionary,FTSE MIB
-STMMI.MI,STMicroelectronics,Technology,FTSE MIB
-TEN.MI,Tenaris,Energy,FTSE MIB
-TIT.MI,Telecom Italia,Communication Services,FTSE MIB
-TRN.MI,Terna,Utilities,FTSE MIB
-UCG.MI,UniCredit,Financials,FTSE MIB
-UNI.MI,Unipol Gruppo,Financials,FTSE MIB
+ticker,name,sector,segment,market,exchange,reliability
+A2A.MI,A2A,Utilities,FTSE MIB,Europe,Borsa Italiana,medium
+AMP.MI,Amplifon,Healthcare,FTSE MIB,Europe,Borsa Italiana,medium
+AZM.MI,Azimut Holding,Financial Services,FTSE MIB,Europe,Borsa Italiana,medium
+BAMI.MI,Banco BPM,Financials,FTSE MIB,Europe,Borsa Italiana,medium
+BMED.MI,Banca Mediolanum,Financials,FTSE MIB,Europe,Borsa Italiana,medium
+BMPS.MI,Banca Monte Paschi Siena,Financials,FTSE MIB,Europe,Borsa Italiana,medium
+BPE.MI,BPER Banca,Financials,FTSE MIB,Europe,Borsa Italiana,medium
+BZU.MI,Buzzi,Materials,FTSE MIB,Europe,Borsa Italiana,medium
+CPR.MI,Davide Campari-Milano,Consumer Staples,FTSE MIB,Europe,Borsa Italiana,medium
+DIA.MI,Diasorin,Healthcare,FTSE MIB,Europe,Borsa Italiana,medium
+ENEL.MI,Enel,Utilities,FTSE MIB,Europe,Borsa Italiana,medium
+ENI.MI,Eni,Energy,FTSE MIB,Europe,Borsa Italiana,medium
+ERG.MI,ERG,Utilities,FTSE MIB,Europe,Borsa Italiana,medium
+FBK.MI,FinecoBank,Financials,FTSE MIB,Europe,Borsa Italiana,medium
+G.MI,Assicurazioni Generali,Financials,FTSE MIB,Europe,Borsa Italiana,medium
+HER.MI,Hera,Utilities,FTSE MIB,Europe,Borsa Italiana,medium
+INW.MI,Inwit,Communication Services,FTSE MIB,Europe,Borsa Italiana,medium
+IP.MI,Interpump Group,Industrials,FTSE MIB,Europe,Borsa Italiana,medium
+ISP.MI,Intesa Sanpaolo,Financials,FTSE MIB,Europe,Borsa Italiana,medium
+LDO.MI,Leonardo,Industrials,FTSE MIB,Europe,Borsa Italiana,medium
+MB.MI,Mediobanca,Financials,FTSE MIB,Europe,Borsa Italiana,medium
+MONC.MI,Moncler,Consumer Discretionary,FTSE MIB,Europe,Borsa Italiana,medium
+NEXI.MI,Nexi,Technology,FTSE MIB,Europe,Borsa Italiana,medium
+PIRC.MI,Pirelli & C,Consumer Discretionary,FTSE MIB,Europe,Borsa Italiana,medium
+PRY.MI,Prysmian,Industrials,FTSE MIB,Europe,Borsa Italiana,medium
+PST.MI,Poste Italiane,Financials,FTSE MIB,Europe,Borsa Italiana,medium
+RACE.MI,Ferrari,Consumer Discretionary,FTSE MIB,Europe,Borsa Italiana,medium
+REC.MI,Recordati,Healthcare,FTSE MIB,Europe,Borsa Italiana,medium
+SPM.MI,Saipem,Energy,FTSE MIB,Europe,Borsa Italiana,medium
+SRG.MI,Snam,Utilities,FTSE MIB,Europe,Borsa Italiana,medium
+STLAM.MI,Stellantis,Consumer Discretionary,FTSE MIB,Europe,Borsa Italiana,medium
+STMMI.MI,STMicroelectronics,Technology,FTSE MIB,Europe,Borsa Italiana,medium
+TEN.MI,Tenaris,Energy,FTSE MIB,Europe,Borsa Italiana,medium
+TIT.MI,Telecom Italia,Communication Services,FTSE MIB,Europe,Borsa Italiana,medium
+TRN.MI,Terna,Utilities,FTSE MIB,Europe,Borsa Italiana,medium
+UCG.MI,UniCredit,Financials,FTSE MIB,Europe,Borsa Italiana,medium
+UNI.MI,Unipol Gruppo,Financials,FTSE MIB,Europe,Borsa Italiana,medium

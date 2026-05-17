@@ -1,0 +1,100 @@
+ticker,name,sector,segment,market,exchange,reliability
+AAPL,Apple,Technology,S&P 500,North America,NASDAQ,high
+MSFT,Microsoft,Technology,S&P 500,North America,NASDAQ,high
+NVDA,NVIDIA,Technology,S&P 500,North America,NASDAQ,high
+AMZN,Amazon,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+GOOGL,Alphabet,Communication Services,S&P 500,North America,NASDAQ,high
+META,Meta Platforms,Communication Services,S&P 500,North America,NASDAQ,high
+BRK-B,Berkshire Hathaway,Financials,S&P 500,North America,NYSE,high
+LLY,Eli Lilly,Healthcare,S&P 500,North America,NYSE,high
+AVGO,Broadcom,Technology,S&P 500,North America,NASDAQ,high
+TSLA,Tesla,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+JPM,JPMorgan Chase,Financials,S&P 500,North America,NYSE,high
+WMT,Walmart,Consumer Staples,S&P 500,North America,NYSE,high
+V,Visa,Financials,S&P 500,North America,NYSE,high
+XOM,ExxonMobil,Energy,S&P 500,North America,NYSE,high
+MA,Mastercard,Financials,S&P 500,North America,NYSE,high
+UNH,UnitedHealth,Healthcare,S&P 500,North America,NYSE,high
+COST,Costco,Consumer Staples,S&P 500,North America,NASDAQ,high
+HD,Home Depot,Consumer Discretionary,S&P 500,North America,NYSE,high
+PG,Procter & Gamble,Consumer Staples,S&P 500,North America,NYSE,high
+JNJ,Johnson & Johnson,Healthcare,S&P 500,North America,NYSE,high
+ORCL,Oracle,Technology,S&P 500,North America,NYSE,high
+BAC,Bank of America,Financials,S&P 500,North America,NYSE,high
+ABBV,AbbVie,Healthcare,S&P 500,North America,NYSE,high
+CRM,Salesforce,Technology,S&P 500,North America,NYSE,high
+NFLX,Netflix,Communication Services,S&P 500,North America,NASDAQ,high
+KO,Coca-Cola,Consumer Staples,S&P 500,North America,NYSE,high
+CVX,Chevron,Energy,S&P 500,North America,NYSE,high
+MRK,Merck,Healthcare,S&P 500,North America,NYSE,high
+AMD,Advanced Micro Devices,Technology,S&P 500,North America,NASDAQ,high
+TMO,Thermo Fisher Scientific,Healthcare,S&P 500,North America,NYSE,high
+CSCO,Cisco,Technology,S&P 500,North America,NASDAQ,high
+PEP,PepsiCo,Consumer Staples,S&P 500,North America,NASDAQ,high
+WFC,Wells Fargo,Financials,S&P 500,North America,NYSE,high
+ADBE,Adobe,Technology,S&P 500,North America,NASDAQ,high
+ACN,Accenture,Technology,S&P 500,North America,NYSE,high
+MCD,McDonald's,Consumer Discretionary,S&P 500,North America,NYSE,high
+NOW,ServiceNow,Technology,S&P 500,North America,NYSE,high
+IBM,IBM,Technology,S&P 500,North America,NYSE,high
+GS,Goldman Sachs,Financials,S&P 500,North America,NYSE,high
+CAT,Caterpillar,Industrials,S&P 500,North America,NYSE,high
+ABT,Abbott Laboratories,Healthcare,S&P 500,North America,NYSE,high
+TXN,Texas Instruments,Technology,S&P 500,North America,NASDAQ,high
+PM,Philip Morris,Consumer Staples,S&P 500,North America,NYSE,high
+AXP,American Express,Financials,S&P 500,North America,NYSE,high
+GE,GE Aerospace,Industrials,S&P 500,North America,NYSE,high
+ISRG,Intuitive Surgical,Healthcare,S&P 500,North America,NASDAQ,high
+SPGI,S&P Global,Financials,S&P 500,North America,NYSE,high
+BKNG,Booking Holdings,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+AMGN,Amgen,Healthcare,S&P 500,North America,NASDAQ,high
+PLD,Prologis,Real Estate,S&P 500,North America,NYSE,high
+RTX,RTX Corporation,Industrials,S&P 500,North America,NYSE,high
+HON,Honeywell,Industrials,S&P 500,North America,NASDAQ,high
+ETN,Eaton,Industrials,S&P 500,North America,NYSE,high
+T,AT&T,Communication Services,S&P 500,North America,NYSE,high
+MS,Morgan Stanley,Financials,S&P 500,North America,NYSE,high
+SCHW,Charles Schwab,Financials,S&P 500,North America,NYSE,high
+SYK,Stryker,Healthcare,S&P 500,North America,NYSE,high
+BLK,BlackRock,Financials,S&P 500,North America,NYSE,high
+VRTX,Vertex Pharmaceuticals,Healthcare,S&P 500,North America,NASDAQ,high
+C,Citigroup,Financials,S&P 500,North America,NYSE,high
+NEE,NextEra Energy,Utilities,S&P 500,North America,NYSE,high
+PANW,Palo Alto Networks,Technology,S&P 500,North America,NASDAQ,high
+DE,Deere & Company,Industrials,S&P 500,North America,NYSE,high
+UNP,Union Pacific,Industrials,S&P 500,North America,NYSE,high
+MDT,Medtronic,Healthcare,S&P 500,North America,NYSE,high
+BMY,Bristol-Myers Squibb,Healthcare,S&P 500,North America,NYSE,high
+DHR,Danaher,Healthcare,S&P 500,North America,NYSE,high
+CB,Chubb,Financials,S&P 500,North America,NYSE,high
+TJX,TJX Companies,Consumer Discretionary,S&P 500,North America,NYSE,high
+SO,Southern Company,Utilities,S&P 500,North America,NYSE,high
+MU,Micron Technology,Technology,S&P 500,North America,NASDAQ,high
+AMAT,Applied Materials,Technology,S&P 500,North America,NASDAQ,high
+CI,Cigna,Healthcare,S&P 500,North America,NYSE,high
+ELV,Elevance Health,Healthcare,S&P 500,North America,NYSE,high
+PGR,Progressive,Financials,S&P 500,North America,NYSE,high
+BSX,Boston Scientific,Healthcare,S&P 500,North America,NYSE,high
+MMC,Marsh & McLennan,Financials,S&P 500,North America,NYSE,high
+APD,Air Products,Materials,S&P 500,North America,NYSE,high
+ICE,Intercontinental Exchange,Financials,S&P 500,North America,NYSE,high
+CL,Colgate-Palmolive,Consumer Staples,S&P 500,North America,NYSE,high
+ADI,Analog Devices,Technology,S&P 500,North America,NASDAQ,high
+KLAC,KLA Corporation,Technology,S&P 500,North America,NASDAQ,high
+REGN,Regeneron,Healthcare,S&P 500,North America,NASDAQ,high
+CME,CME Group,Financials,S&P 500,North America,NASDAQ,high
+ZTS,Zoetis,Healthcare,S&P 500,North America,NYSE,high
+DUK,Duke Energy,Utilities,S&P 500,North America,NYSE,high
+FI,Fiserv,Technology,S&P 500,North America,NYSE,high
+MCO,Moody's,Financials,S&P 500,North America,NYSE,high
+EMR,Emerson Electric,Industrials,S&P 500,North America,NYSE,high
+HCA,HCA Healthcare,Healthcare,S&P 500,North America,NYSE,high
+TT,Trane Technologies,Industrials,S&P 500,North America,NYSE,high
+AON,Aon,Financials,S&P 500,North America,NYSE,high
+PSA,Public Storage,Real Estate,S&P 500,North America,NYSE,high
+GD,General Dynamics,Industrials,S&P 500,North America,NYSE,high
+PH,Parker Hannifin,Industrials,S&P 500,North America,NYSE,high
+SHW,Sherwin-Williams,Materials,S&P 500,North America,NYSE,high
+ITW,Illinois Tool Works,Industrials,S&P 500,North America,NYSE,high
+USB,US Bancorp,Financials,S&P 500,North America,NYSE,high
+LMT,Lockheed Martin,Industrials,S&P 500,North America,NYSE,high

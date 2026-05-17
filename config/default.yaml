@@ -24,6 +24,10 @@ capital:
 universe:
   files:
     - config/universe/ftse_mib.csv
+    - config/universe/sp500_top100.csv
+    - config/universe/dax40.csv
+    - config/universe/ftse100_top30.csv
+    - config/universe/cac40_top25.csv
   # Filtri di liquidità minimi (per non comprare titoli sottili)
   min_avg_daily_volume_eur: 500000
   min_market_cap_eur: 100000000
@@ -81,7 +85,7 @@ data_quality:
 # Loop di esecuzione
 # ------------------------------------------------------------
 orchestrator:
-  cycle_interval_seconds: 300       # ogni 5 min (compatibile con yfinance 15min delay)
+  cycle_interval_seconds: 900       # ogni 15 min (~230 titoli multi-mercato)
   market_hours:
     open: "09:00"
     close: "17:30"
