@@ -85,7 +85,7 @@ data_quality:
 # Loop di esecuzione
 # ------------------------------------------------------------
 orchestrator:
-  cycle_interval_seconds: 300       # ogni 5 min (cache storica + analisi parallela)
+  cycle_interval_seconds: 900       # ogni 15 min (loop lento - analisi completa)
   market_hours:
     open: "09:00"
     close: "17:30"
@@ -120,3 +120,33 @@ broker:
 storage:
   db_path: data/andreatrading.db
   cache_path: data/cache
+
+# ------------------------------------------------------------
+# Momentum (fast loop) - parametri basati su strategie professionali
+# ------------------------------------------------------------
+momentum:
+  fast_cycle_seconds: 60          # ciclo ogni minuto
+
+  # Rilevamento trend (ultimi 5 minuti di candele 1-min)
+  lookback_minutes: 5
+  threshold_pct: 0.004            # 0.4% movimento minimo per segnale
+  strong_threshold_pct: 0.007     # 0.7% per segnale forte
+  volume_multiplier: 1.3          # volume corrente >= 1.3x media 20 periodi
+
+  # Quanti titoli dalla watchlist del loop lento
+  watchlist_size: 30
+
+  # Sizing basato su forza del trend
+  strong_size_pct: 0.08           # trend forte  → 8% del capitale
+  medium_size_pct: 0.05           # trend medio  → 5%
+  weak_size_pct: 0.03             # trend debole → 3%
+  max_fast_positions: 5           # max posizioni aperte in contemporanea
+
+  # Protezione guadagni
+  profit_lock_trigger_pct: 0.012  # attiva trailing dopo +1.2%
+  profit_trail_pct: 0.004         # vendi se scende 0.4% dal picco
+  hard_stop_pct: 0.015            # stop loss fisso a -1.5%
+
+  # Commissioni IBKR
+  commission_eur: 2.95
+  min_net_gain_pct: 0.008         # guadagno netto minimo 0.8%

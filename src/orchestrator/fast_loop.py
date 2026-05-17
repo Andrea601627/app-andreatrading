@@ -1,0 +1,245 @@
+"""Fast loop - momentum trading ogni 60 secondi.
+
+Logica:
+1. Legge la watchlist dal loop lento (top titoli con score positivo)
+2. Scarica candele 1-minuto solo per watchlist + posizioni aperte
+3. Controlla profit guard su posizioni esistenti
+4. Apre nuove posizioni se rileva momentum + conferma volume
+5. Il sizing dipende dalla forza del trend
+"""
+from __future__ import annotations
+
+import json
+import math
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, time as dtime
+
+import pandas as pd
+import yfinance as yf
+
+from ..execution.order_manager import get_broker
+from ..risk.drawdown_guard import is_blocked
+from ..risk.profit_guard import check as profit_guard_check
+from ..strategy.momentum import detect as detect_momentum
+from ..utils.config import load_config
+from ..utils.db import connect, init_db
+from ..utils.logger import get_logger
+
+log = get_logger()
+
+
+def _is_market_hours(cfg: dict) -> bool:
+    if not cfg["orchestrator"]["trade_only_market_hours"]:
+        return True
+    now = datetime.now().time()
+    open_t = dtime.fromisoformat(cfg["orchestrator"]["market_hours"]["open"])
+    close_t = dtime.fromisoformat(cfg["orchestrator"]["market_hours"]["close"])
+    return datetime.now().weekday() < 5 and open_t <= now <= close_t
+
+
+def _get_watchlist(limit: int) -> list[dict]:
+    """Top titoli dal loop lento: score > 0, quality ok, segnale più recente per ticker."""
+    with connect() as c:
+        rows = c.execute("""
+            SELECT s.ticker, s.score
+            FROM signals s
+            INNER JOIN (
+                SELECT ticker, MAX(generated_at) AS mx
+                FROM signals GROUP BY ticker
+            ) latest ON s.ticker = latest.ticker AND s.generated_at = latest.mx
+            WHERE s.score > 0 AND s.quality_ok = 1 AND s.horizon = 'short_medium'
+            ORDER BY s.score DESC
+            LIMIT ?
+        """, (limit,)).fetchall()
+    return [{"ticker": r["ticker"], "score": float(r["score"])} for r in rows]
+
+
+def _get_fast_positions() -> dict[str, dict]:
+    """Posizioni aperte dal fast loop (horizon='fast')."""
+    with connect() as c:
+        rows = c.execute("""
+            SELECT ticker, quantity, avg_price, high_water_mark
+            FROM positions WHERE horizon = 'fast'
+        """).fetchall()
+    return {r["ticker"]: dict(r) for r in rows}
+
+
+def _update_hwm(ticker: str, new_hwm: float) -> None:
+    with connect() as c:
+        c.execute(
+            "UPDATE positions SET high_water_mark=? WHERE ticker=? AND horizon='fast'",
+            (new_hwm, ticker),
+        )
+
+
+def _fetch_1m(ticker: str) -> tuple[str, pd.DataFrame | None]:
+    try:
+        df = yf.download(ticker, period="1d", interval="1m",
+                         auto_adjust=True, progress=False, threads=False)
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+        if df.empty:
+            return ticker, None
+        df.index = pd.to_datetime(df.index)
+        return ticker, df
+    except Exception as e:
+        log.debug(f"1m fetch failed {ticker}: {e}")
+        return ticker, None
+
+
+def _min_qty(price: float, commission_eur: float, min_net_gain: float) -> int:
+    """Quantità minima per coprire le commissioni e avere margine."""
+    if price <= 0 or min_net_gain <= 0:
+        return 1
+    return max(1, math.ceil((2 * commission_eur) / (price * min_net_gain)))
+
+
+def run_fast_cycle() -> dict:
+    cfg = load_config()
+    cfg_m = cfg["momentum"]
+    init_db()
+    broker = get_broker()
+
+    if is_blocked():
+        return {"status": "blocked"}
+
+    if not _is_market_hours(cfg):
+        return {"status": "outside_hours"}
+
+    watchlist = _get_watchlist(cfg_m["watchlist_size"])
+    positions = _get_fast_positions()
+
+    watch_set = {w["ticker"] for w in watchlist}
+    all_tickers = list(set(positions.keys()) | watch_set)
+
+    if not all_tickers:
+        return {"status": "no_tickers"}
+
+    # Download candele 1-minuto in parallelo
+    data_map: dict[str, pd.DataFrame | None] = {}
+    with ThreadPoolExecutor(max_workers=min(8, len(all_tickers))) as pool:
+        futures = {pool.submit(_fetch_1m, t): t for t in all_tickers}
+        for future in as_completed(futures):
+            ticker, df = future.result()
+            data_map[ticker] = df
+
+    sells = 0
+    buys = 0
+
+    # Equity totale per sizing
+    cash = broker.cash()
+    pos_value = sum(
+        p["quantity"] * float(data_map[t]["Close"].iloc[-1])
+        if data_map.get(t) is not None
+        else p["quantity"] * p["avg_price"]
+        for t, p in positions.items()
+    )
+    total_equity = cash + pos_value
+
+    # 1. Profit guard su posizioni aperte
+    for ticker, pos in positions.items():
+        df = data_map.get(ticker)
+        if df is None or df.empty:
+            continue
+
+        current_price = float(df["Close"].iloc[-1])
+        hwm = pos.get("high_water_mark") or pos["avg_price"]
+
+        # Aggiorna high water mark se il prezzo è salito
+        if current_price > (hwm or 0):
+            hwm = current_price
+            _update_hwm(ticker, hwm)
+
+        guard = profit_guard_check(
+            buy_price=float(pos["avg_price"]),
+            current_price=current_price,
+            high_water_mark=float(hwm),
+            quantity=int(pos["quantity"]),
+            cfg_momentum=cfg_m,
+        )
+
+        if guard.should_sell:
+            result = broker.sell(ticker, int(pos["quantity"]),
+                                 current_price, close_reason=guard.reason)
+            if result.success:
+                log.info(f"FAST SELL {ticker} @ {current_price:.4f} | "
+                         f"reason={guard.reason} net={guard.net_gain_pct:.2%}")
+                sells += 1
+
+    # 2. Nuovi acquisti dalla watchlist
+    open_count = len(_get_fast_positions())
+    slow_scores = {w["ticker"]: w["score"] for w in watchlist}
+
+    for w in watchlist:
+        ticker = w["ticker"]
+        if open_count >= cfg_m["max_fast_positions"]:
+            break
+        if ticker in positions:
+            continue
+
+        df = data_map.get(ticker)
+        if df is None or df.empty:
+            continue
+
+        sig = detect_momentum(ticker, df, cfg_m)
+        if sig.direction != "BUY":
+            continue
+
+        current_price = float(df["Close"].iloc[-1])
+        if current_price <= 0:
+            continue
+
+        # Sizing: momentum strength + bonus da slow score
+        slow_bonus = min(slow_scores.get(ticker, 0) / 100.0, 0.20)
+        effective_size = sig.size_pct * (1 + slow_bonus)
+        budget = total_equity * effective_size
+
+        qty = int(math.floor(budget / current_price))
+        qty = max(qty, _min_qty(current_price, cfg_m["commission_eur"],
+                                cfg_m["min_net_gain_pct"]))
+
+        if qty * current_price > cash:
+            continue
+
+        result = broker.buy(
+            ticker, qty, current_price,
+            horizon="fast",
+            score=round(sig.momentum_pct * 100, 2),
+            reason_json=json.dumps({
+                "momentum_pct": round(sig.momentum_pct, 5),
+                "strength": sig.strength,
+                "volume_confirmed": sig.volume_confirmed,
+                "slow_score": slow_scores.get(ticker, 0),
+            }),
+        )
+        if result.success:
+            log.info(f"FAST BUY {ticker} qty={qty} @ {current_price:.4f} | "
+                     f"momentum={sig.momentum_pct:.2%} strength={sig.strength:.2f}")
+            buys += 1
+            open_count += 1
+            cash -= qty * current_price
+
+    return {"status": "ok", "buys": buys, "sells": sells, "fast_positions": open_count}
+
+
+def run_forever() -> None:
+    cfg = load_config()
+    interval = cfg["momentum"]["fast_cycle_seconds"]
+    log.info(f"Fast loop avviato — ciclo ogni {interval}s")
+    while True:
+        try:
+            result = run_fast_cycle()
+            if result.get("buys") or result.get("sells"):
+                log.info(f"Fast cycle: {result}")
+        except Exception as e:
+            log.exception(f"Errore fast cycle: {e}")
+        time.sleep(interval)
+
+
+def main() -> None:
+    run_forever()
+
+
+if __name__ == "__main__":
+    main()
