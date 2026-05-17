@@ -1,0 +1,51 @@
+ticker,name,sector,segment,market,exchange,reliability
+7203.T,Toyota Motor,Consumer Discretionary,Nikkei 225,Japan,TSE,medium_high
+6758.T,Sony Group,Technology,Nikkei 225,Japan,TSE,medium_high
+8306.T,Mitsubishi UFJ Financial,Financials,Nikkei 225,Japan,TSE,medium_high
+8035.T,Tokyo Electron,Technology,Nikkei 225,Japan,TSE,medium_high
+6861.T,Keyence,Technology,Nikkei 225,Japan,TSE,medium_high
+9984.T,SoftBank Group,Technology,Nikkei 225,Japan,TSE,medium_high
+6501.T,Hitachi,Industrials,Nikkei 225,Japan,TSE,medium_high
+7974.T,Nintendo,Technology,Nikkei 225,Japan,TSE,medium_high
+4063.T,Shin-Etsu Chemical,Materials,Nikkei 225,Japan,TSE,medium_high
+6098.T,Recruit Holdings,Industrials,Nikkei 225,Japan,TSE,medium_high
+9433.T,KDDI,Communication,Nikkei 225,Japan,TSE,medium_high
+6702.T,Fujitsu,Technology,Nikkei 225,Japan,TSE,medium_high
+8316.T,Sumitomo Mitsui Financial,Financials,Nikkei 225,Japan,TSE,medium_high
+4519.T,Chugai Pharmaceutical,Healthcare,Nikkei 225,Japan,TSE,medium_high
+4901.T,Fujifilm Holdings,Technology,Nikkei 225,Japan,TSE,medium_high
+6367.T,Daikin Industries,Industrials,Nikkei 225,Japan,TSE,medium_high
+7267.T,Honda Motor,Consumer Discretionary,Nikkei 225,Japan,TSE,medium_high
+8411.T,Mizuho Financial,Financials,Nikkei 225,Japan,TSE,medium_high
+2914.T,Japan Tobacco,Consumer Staples,Nikkei 225,Japan,TSE,medium_high
+9432.T,NTT,Communication,Nikkei 225,Japan,TSE,medium_high
+6594.T,Nidec,Industrials,Nikkei 225,Japan,TSE,medium_high
+7741.T,Hoya,Technology,Nikkei 225,Japan,TSE,medium_high
+6723.T,Renesas Electronics,Technology,Nikkei 225,Japan,TSE,medium_high
+4543.T,Terumo,Healthcare,Nikkei 225,Japan,TSE,medium_high
+4661.T,Oriental Land,Consumer Discretionary,Nikkei 225,Japan,TSE,medium_high
+6920.T,Lasertec,Technology,Nikkei 225,Japan,TSE,medium_high
+3382.T,Seven & i Holdings,Consumer Staples,Nikkei 225,Japan,TSE,medium_high
+8766.T,Tokio Marine Holdings,Financials,Nikkei 225,Japan,TSE,medium_high
+2502.T,Asahi Group Holdings,Consumer Staples,Nikkei 225,Japan,TSE,medium_high
+4452.T,Kao,Consumer Staples,Nikkei 225,Japan,TSE,medium_high
+5108.T,Bridgestone,Consumer Discretionary,Nikkei 225,Japan,TSE,medium_high
+9022.T,Central Japan Railway,Industrials,Nikkei 225,Japan,TSE,medium_high
+4568.T,Daiichi Sankyo,Healthcare,Nikkei 225,Japan,TSE,medium_high
+6645.T,Omron,Industrials,Nikkei 225,Japan,TSE,medium_high
+4704.T,Trend Micro,Technology,Nikkei 225,Japan,TSE,medium_high
+8001.T,Itochu,Industrials,Nikkei 225,Japan,TSE,medium_high
+8031.T,Mitsui,Industrials,Nikkei 225,Japan,TSE,medium_high
+8058.T,Mitsubishi,Industrials,Nikkei 225,Japan,TSE,medium_high
+1925.T,Daiwa House Industry,Real Estate,Nikkei 225,Japan,TSE,medium_high
+7751.T,Canon,Technology,Nikkei 225,Japan,TSE,medium_high
+6963.T,Rohm,Technology,Nikkei 225,Japan,TSE,medium_high
+4506.T,Sumitomo Dainippon Pharma,Healthcare,Nikkei 225,Japan,TSE,medium_high
+9501.T,Tokyo Electric Power,Utilities,Nikkei 225,Japan,TSE,medium_high
+5401.T,Nippon Steel,Materials,Nikkei 225,Japan,TSE,medium_high
+7832.T,Bandai Namco,Consumer Discretionary,Nikkei 225,Japan,TSE,medium_high
+6857.T,Advantest,Technology,Nikkei 225,Japan,TSE,medium_high
+7733.T,Olympus,Technology,Nikkei 225,Japan,TSE,medium_high
+4911.T,Shiseido,Consumer Staples,Nikkei 225,Japan,TSE,medium_high
+9613.T,NTT Data,Technology,Nikkei 225,Japan,TSE,medium_high
+6971.T,Kyocera,Technology,Nikkei 225,Japan,TSE,medium_high

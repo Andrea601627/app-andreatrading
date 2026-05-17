@@ -25,12 +25,25 @@ universe:
   files:
     - config/universe/ftse_mib.csv
     - config/universe/sp500_top100.csv
+    - config/universe/sp500_extended.csv
+    - config/universe/nasdaq100_extra.csv
     - config/universe/dax40.csv
     - config/universe/ftse100_top30.csv
     - config/universe/cac40_top25.csv
+    - config/universe/nikkei50.csv
+    - config/universe/hangseng30.csv
   # Filtri di liquidità minimi (per non comprare titoli sottili)
   min_avg_daily_volume_eur: 500000
   min_market_cap_eur: 100000000
+
+# ------------------------------------------------------------
+# Screener pre-filtro: ordina tutti i titoli per rendimento recente
+# e passa solo i top N al loop lento per l'analisi completa
+# ------------------------------------------------------------
+screener:
+  top_n_for_analysis: 100   # top 100 per analisi completa ogni 15 min
+  top_n_watchlist: 30       # top 30 per fast loop (watchlist momentum)
+  lookback_days: 5          # rendimento su 5 giorni di borsa
 
 # ------------------------------------------------------------
 # Pesi multi-fattore per orizzonte

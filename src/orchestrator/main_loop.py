@@ -15,6 +15,7 @@ from datetime import datetime, time as dtime
 
 from ..analysis.regime import detect as detect_regime
 from ..data.fetcher import get_last_price
+from ..data.screener import top_tickers
 from ..data.universe import tickers
 from ..execution.order_manager import get_broker
 from ..learning.adaptive import propose_weight_adjustments, record_proposal
@@ -116,12 +117,16 @@ def run_cycle() -> dict:
     regime = detect_regime()
     log.info(f"Regime mercato: {regime.trend} / vol={regime.volatility} ({regime.annualized_vol_pct}%)")
 
-    # 1) analizza tutti i titoli in parallelo
-    all_tickers = tickers()
-    log.info(f"Analisi {len(all_tickers)} titoli con {_ANALYSIS_WORKERS} worker paralleli...")
+    # 1) screener pre-filter: top 100 per rendimento recente (usa cache parquet, no download)
+    screener_top_n = cfg.get("screener", {}).get("top_n_for_analysis", 100)
+    universe_size = len(tickers())
+    selected = top_tickers(top_n=screener_top_n)
+    log.info(f"Screener: {universe_size} titoli totali → top {len(selected)} selezionati per analisi")
+
+    log.info(f"Analisi {len(selected)} titoli con {_ANALYSIS_WORKERS} worker paralleli...")
     raw_signals: list = []
     with ThreadPoolExecutor(max_workers=_ANALYSIS_WORKERS) as pool:
-        future_map = {pool.submit(analyze_ticker, t, regime): t for t in all_tickers}
+        future_map = {pool.submit(analyze_ticker, t, regime): t for t in selected}
         for future in as_completed(future_map):
             t = future_map[future]
             try:

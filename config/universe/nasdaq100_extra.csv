@@ -1,0 +1,51 @@
+ticker,name,sector,segment,market,exchange,reliability
+AAPL,Apple,Technology,NASDAQ 100,North America,NASDAQ,high
+MSFT,Microsoft,Technology,NASDAQ 100,North America,NASDAQ,high
+NVDA,NVIDIA,Technology,NASDAQ 100,North America,NASDAQ,high
+META,Meta Platforms,Technology,NASDAQ 100,North America,NASDAQ,high
+GOOGL,Alphabet A,Technology,NASDAQ 100,North America,NASDAQ,high
+GOOG,Alphabet C,Technology,NASDAQ 100,North America,NASDAQ,high
+AMZN,Amazon,Consumer Discretionary,NASDAQ 100,North America,NASDAQ,high
+TSLA,Tesla,Consumer Discretionary,NASDAQ 100,North America,NASDAQ,high
+AVGO,Broadcom,Technology,NASDAQ 100,North America,NASDAQ,high
+COST,Costco,Consumer Staples,NASDAQ 100,North America,NASDAQ,high
+ASML,ASML Holding,Technology,NASDAQ 100,North America,NASDAQ,high
+AZN,AstraZeneca,Healthcare,NASDAQ 100,North America,NASDAQ,high
+AMD,Advanced Micro Devices,Technology,NASDAQ 100,North America,NASDAQ,high
+ARM,Arm Holdings,Technology,NASDAQ 100,North America,NASDAQ,high
+PANW,Palo Alto Networks,Technology,NASDAQ 100,North America,NASDAQ,high
+AMAT,Applied Materials,Technology,NASDAQ 100,North America,NASDAQ,high
+MU,Micron Technology,Technology,NASDAQ 100,North America,NASDAQ,high
+ADI,Analog Devices,Technology,NASDAQ 100,North America,NASDAQ,high
+KLAC,KLA Corporation,Technology,NASDAQ 100,North America,NASDAQ,high
+MRVL,Marvell Technology,Technology,NASDAQ 100,North America,NASDAQ,high
+CRWD,CrowdStrike,Technology,NASDAQ 100,North America,NASDAQ,high
+WDAY,Workday,Technology,NASDAQ 100,North America,NASDAQ,high
+TEAM,Atlassian,Technology,NASDAQ 100,North America,NASDAQ,high
+DDOG,Datadog,Technology,NASDAQ 100,North America,NASDAQ,high
+ZS,Zscaler,Technology,NASDAQ 100,North America,NASDAQ,high
+MELI,MercadoLibre,Consumer Discretionary,NASDAQ 100,North America,NASDAQ,high
+PYPL,PayPal,Financials,NASDAQ 100,North America,NASDAQ,high
+CHTR,Charter Communications,Communication,NASDAQ 100,North America,NASDAQ,high
+CMCSA,Comcast,Communication,NASDAQ 100,North America,NASDAQ,high
+NFLX,Netflix,Communication,NASDAQ 100,North America,NASDAQ,high
+TMUS,T-Mobile US,Communication,NASDAQ 100,North America,NASDAQ,high
+REGN,Regeneron Pharmaceuticals,Healthcare,NASDAQ 100,North America,NASDAQ,high
+VRTX,Vertex Pharmaceuticals,Healthcare,NASDAQ 100,North America,NASDAQ,high
+AMGN,Amgen,Healthcare,NASDAQ 100,North America,NASDAQ,high
+MDLZ,Mondelez International,Consumer Staples,NASDAQ 100,North America,NASDAQ,high
+PDD,PDD Holdings,Consumer Discretionary,NASDAQ 100,North America,NASDAQ,high
+BIDU,Baidu,Technology,NASDAQ 100,North America,NASDAQ,high
+JD,JD.com,Consumer Discretionary,NASDAQ 100,North America,NASDAQ,high
+TTD,The Trade Desk,Technology,NASDAQ 100,North America,NASDAQ,high
+FAST,Fastenal,Industrials,NASDAQ 100,North America,NASDAQ,high
+ROST,Ross Stores,Consumer Discretionary,NASDAQ 100,North America,NASDAQ,high
+ODFL,Old Dominion Freight,Industrials,NASDAQ 100,North America,NASDAQ,high
+PCAR,PACCAR,Industrials,NASDAQ 100,North America,NASDAQ,high
+EXC,Exelon,Utilities,NASDAQ 100,North America,NASDAQ,high
+XEL,Xcel Energy,Utilities,NASDAQ 100,North America,NASDAQ,high
+GEHC,GE HealthCare,Healthcare,NASDAQ 100,North America,NASDAQ,high
+GFS,GlobalFoundries,Technology,NASDAQ 100,North America,NASDAQ,high
+SMCI,Super Micro Computer,Technology,NASDAQ 100,North America,NASDAQ,high
+APP,Applovin,Technology,NASDAQ 100,North America,NASDAQ,high
+CEG,Constellation Energy,Utilities,NASDAQ 100,North America,NASDAQ,high

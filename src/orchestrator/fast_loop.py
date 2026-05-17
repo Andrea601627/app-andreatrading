@@ -18,6 +18,7 @@ from datetime import datetime, time as dtime
 import pandas as pd
 import yfinance as yf
 
+from ..data.screener import run as screener_run
 from ..execution.order_manager import get_broker
 from ..risk.drawdown_guard import is_blocked
 from ..risk.profit_guard import check as profit_guard_check
@@ -39,7 +40,11 @@ def _is_market_hours(cfg: dict) -> bool:
 
 
 def _get_watchlist(limit: int) -> list[dict]:
-    """Top titoli dal loop lento: score > 0, quality ok, segnale più recente per ticker."""
+    """Top titoli per il fast loop.
+
+    Priorità 1: segnali recenti dal loop lento (score > 0, quality_ok).
+    Priorità 2: screener per rendimento 5-giorni (usato se segnali insufficienti).
+    """
     with connect() as c:
         rows = c.execute("""
             SELECT s.ticker, s.score
@@ -52,7 +57,19 @@ def _get_watchlist(limit: int) -> list[dict]:
             ORDER BY s.score DESC
             LIMIT ?
         """, (limit,)).fetchall()
-    return [{"ticker": r["ticker"], "score": float(r["score"])} for r in rows]
+    result = [{"ticker": r["ticker"], "score": float(r["score"])} for r in rows]
+
+    # Se il loop lento non ha ancora generato segnali usa lo screener
+    if len(result) < limit // 2:
+        screened = screener_run(top_n=limit)
+        seen = {r["ticker"] for r in result}
+        for s in screened:
+            if s.ticker not in seen:
+                result.append({"ticker": s.ticker, "score": s.return_5d * 100})
+                if len(result) >= limit:
+                    break
+
+    return result[:limit]
 
 
 def _get_fast_positions() -> dict[str, dict]:

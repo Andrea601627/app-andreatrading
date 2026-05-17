@@ -1,0 +1,174 @@
+ticker,name,sector,segment,market,exchange,reliability
+INTC,Intel,Technology,S&P 500,North America,NASDAQ,high
+QCOM,Qualcomm,Technology,S&P 500,North America,NASDAQ,high
+LRCX,Lam Research,Technology,S&P 500,North America,NASDAQ,high
+MCHP,Microchip Technology,Technology,S&P 500,North America,NASDAQ,high
+CDNS,Cadence Design,Technology,S&P 500,North America,NASDAQ,high
+SNPS,Synopsys,Technology,S&P 500,North America,NASDAQ,high
+ANSS,Ansys,Technology,S&P 500,North America,NASDAQ,high
+CTSH,Cognizant,Technology,S&P 500,North America,NASDAQ,high
+INTU,Intuit,Technology,S&P 500,North America,NASDAQ,high
+ADSK,Autodesk,Technology,S&P 500,North America,NASDAQ,high
+FTNT,Fortinet,Technology,S&P 500,North America,NASDAQ,high
+NXPI,NXP Semiconductors,Technology,S&P 500,North America,NASDAQ,high
+ON,ON Semiconductor,Technology,S&P 500,North America,NASDAQ,high
+MPWR,Monolithic Power,Technology,S&P 500,North America,NASDAQ,high
+ENPH,Enphase Energy,Technology,S&P 500,North America,NASDAQ,high
+FSLR,First Solar,Technology,S&P 500,North America,NASDAQ,high
+HPQ,HP Inc,Technology,S&P 500,North America,NYSE,high
+HPE,Hewlett Packard Enterprise,Technology,S&P 500,North America,NYSE,high
+DELL,Dell Technologies,Technology,S&P 500,North America,NYSE,high
+GLW,Corning,Technology,S&P 500,North America,NYSE,high
+KEYS,Keysight Technologies,Technology,S&P 500,North America,NYSE,high
+NTAP,NetApp,Technology,S&P 500,North America,NASDAQ,high
+WDC,Western Digital,Technology,S&P 500,North America,NASDAQ,high
+STX,Seagate Technology,Technology,S&P 500,North America,NASDAQ,high
+GILD,Gilead Sciences,Healthcare,S&P 500,North America,NASDAQ,high
+BIIB,Biogen,Healthcare,S&P 500,North America,NASDAQ,high
+IDXX,Idexx Laboratories,Healthcare,S&P 500,North America,NASDAQ,high
+DXCM,Dexcom,Healthcare,S&P 500,North America,NASDAQ,high
+MRNA,Moderna,Healthcare,S&P 500,North America,NASDAQ,high
+ILMN,Illumina,Healthcare,S&P 500,North America,NASDAQ,high
+GEHC,GE HealthCare,Healthcare,S&P 500,North America,NASDAQ,high
+IQV,IQVIA Holdings,Healthcare,S&P 500,North America,NYSE,high
+CVS,CVS Health,Healthcare,S&P 500,North America,NYSE,high
+HUM,Humana,Healthcare,S&P 500,North America,NYSE,high
+CNC,Centene,Healthcare,S&P 500,North America,NYSE,high
+MOH,Molina Healthcare,Healthcare,S&P 500,North America,NYSE,high
+WBA,Walgreens Boots,Healthcare,S&P 500,North America,NASDAQ,high
+MCK,McKesson,Healthcare,S&P 500,North America,NYSE,high
+CAH,Cardinal Health,Healthcare,S&P 500,North America,NYSE,high
+BAX,Baxter International,Healthcare,S&P 500,North America,NYSE,high
+BDX,Becton Dickinson,Healthcare,S&P 500,North America,NYSE,high
+EW,Edwards Lifesciences,Healthcare,S&P 500,North America,NYSE,high
+ZBH,Zimmer Biomet,Healthcare,S&P 500,North America,NYSE,high
+STE,Steris,Healthcare,S&P 500,North America,NYSE,high
+RMD,ResMed,Healthcare,S&P 500,North America,NYSE,high
+HOLX,Hologic,Healthcare,S&P 500,North America,NASDAQ,high
+TECH,Bio-Techne,Healthcare,S&P 500,North America,NASDAQ,high
+PNC,PNC Financial,Financials,S&P 500,North America,NYSE,high
+TFC,Truist Financial,Financials,S&P 500,North America,NYSE,high
+COF,Capital One,Financials,S&P 500,North America,NYSE,high
+DFS,Discover Financial,Financials,S&P 500,North America,NYSE,high
+SYF,Synchrony Financial,Financials,S&P 500,North America,NYSE,high
+ALLY,Ally Financial,Financials,S&P 500,North America,NYSE,high
+CFG,Citizens Financial,Financials,S&P 500,North America,NYSE,high
+FITB,Fifth Third Bancorp,Financials,S&P 500,North America,NASDAQ,high
+HBAN,Huntington Bancshares,Financials,S&P 500,North America,NASDAQ,high
+RF,Regions Financial,Financials,S&P 500,North America,NYSE,high
+KEY,KeyCorp,Financials,S&P 500,North America,NYSE,high
+MTB,M&T Bank,Financials,S&P 500,North America,NYSE,high
+ZION,Zions Bancorporation,Financials,S&P 500,North America,NASDAQ,high
+STT,State Street,Financials,S&P 500,North America,NYSE,high
+BK,Bank of New York Mellon,Financials,S&P 500,North America,NYSE,high
+TROW,T. Rowe Price,Financials,S&P 500,North America,NASDAQ,high
+IVZ,Invesco,Financials,S&P 500,North America,NYSE,high
+AMP,Ameriprise Financial,Financials,S&P 500,North America,NYSE,high
+WRB,W.R. Berkley,Financials,S&P 500,North America,NYSE,high
+HIG,Hartford Financial,Financials,S&P 500,North America,NYSE,high
+MET,MetLife,Financials,S&P 500,North America,NYSE,high
+PRU,Prudential Financial,Financials,S&P 500,North America,NYSE,high
+UNM,Unum Group,Financials,S&P 500,North America,NYSE,high
+LOW,Lowe's,Consumer Discretionary,S&P 500,North America,NYSE,high
+TGT,Target,Consumer Discretionary,S&P 500,North America,NYSE,high
+SBUX,Starbucks,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+CMG,Chipotle Mexican Grill,Consumer Discretionary,S&P 500,North America,NYSE,high
+YUM,Yum Brands,Consumer Discretionary,S&P 500,North America,NYSE,high
+DPZ,Domino's Pizza,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+MAR,Marriott International,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+HLT,Hilton Worldwide,Consumer Discretionary,S&P 500,North America,NYSE,high
+MGM,MGM Resorts,Consumer Discretionary,S&P 500,North America,NYSE,high
+NCLH,Norwegian Cruise Line,Consumer Discretionary,S&P 500,North America,NYSE,high
+CCL,Carnival,Consumer Discretionary,S&P 500,North America,NYSE,high
+RCL,Royal Caribbean,Consumer Discretionary,S&P 500,North America,NYSE,high
+EXPE,Expedia,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+ABNB,Airbnb,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+UBER,Uber Technologies,Consumer Discretionary,S&P 500,North America,NYSE,high
+LYFT,Lyft,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+F,Ford Motor,Consumer Discretionary,S&P 500,North America,NYSE,high
+GM,General Motors,Consumer Discretionary,S&P 500,North America,NYSE,high
+NKE,Nike,Consumer Discretionary,S&P 500,North America,NYSE,high
+LULU,Lululemon Athletica,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+PVH,PVH Corp,Consumer Discretionary,S&P 500,North America,NYSE,high
+RL,Ralph Lauren,Consumer Discretionary,S&P 500,North America,NYSE,high
+VFC,VF Corporation,Consumer Discretionary,S&P 500,North America,NYSE,high
+HAS,Hasbro,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+MAT,Mattel,Consumer Discretionary,S&P 500,North America,NASDAQ,high
+KO,Coca-Cola,Consumer Staples,S&P 500,North America,NYSE,high
+PEP,PepsiCo,Consumer Staples,S&P 500,North America,NASDAQ,high
+MDLZ,Mondelez International,Consumer Staples,S&P 500,North America,NASDAQ,high
+KHC,Kraft Heinz,Consumer Staples,S&P 500,North America,NASDAQ,high
+GIS,General Mills,Consumer Staples,S&P 500,North America,NYSE,high
+K,Kellanova,Consumer Staples,S&P 500,North America,NYSE,high
+CPB,Campbell Soup,Consumer Staples,S&P 500,North America,NYSE,high
+HRL,Hormel Foods,Consumer Staples,S&P 500,North America,NYSE,high
+SJM,J.M. Smucker,Consumer Staples,S&P 500,North America,NYSE,high
+CAG,Conagra Brands,Consumer Staples,S&P 500,North America,NASDAQ,high
+MKC,McCormick,Consumer Staples,S&P 500,North America,NYSE,high
+CHD,Church & Dwight,Consumer Staples,S&P 500,North America,NYSE,high
+EL,Estee Lauder,Consumer Staples,S&P 500,North America,NYSE,high
+KMB,Kimberly-Clark,Consumer Staples,S&P 500,North America,NYSE,high
+CLX,Clorox,Consumer Staples,S&P 500,North America,NYSE,high
+BA,Boeing,Industrials,S&P 500,North America,NYSE,high
+MMM,3M,Industrials,S&P 500,North America,NYSE,high
+NOC,Northrop Grumman,Industrials,S&P 500,North America,NYSE,high
+LHX,L3Harris Technologies,Industrials,S&P 500,North America,NYSE,high
+HII,Huntington Ingalls,Industrials,S&P 500,North America,NYSE,high
+TDG,TransDigm Group,Industrials,S&P 500,North America,NYSE,high
+SPR,Spirit AeroSystems,Industrials,S&P 500,North America,NYSE,high
+HWM,Howmet Aerospace,Industrials,S&P 500,North America,NYSE,high
+FDX,FedEx,Industrials,S&P 500,North America,NYSE,high
+UPS,United Parcel Service,Industrials,S&P 500,North America,NYSE,high
+JBHT,J.B. Hunt Transport,Industrials,S&P 500,North America,NASDAQ,high
+CSX,CSX Corporation,Industrials,S&P 500,North America,NASDAQ,high
+NSC,Norfolk Southern,Industrials,S&P 500,North America,NYSE,high
+XYL,Xylem,Industrials,S&P 500,North America,NYSE,high
+ROK,Rockwell Automation,Industrials,S&P 500,North America,NYSE,high
+FTV,Fortive,Industrials,S&P 500,North America,NYSE,high
+AME,AMETEK,Industrials,S&P 500,North America,NYSE,high
+LDOS,Leidos Holdings,Industrials,S&P 500,North America,NYSE,high
+SAIC,Science Applications,Industrials,S&P 500,North America,NYSE,high
+COP,ConocoPhillips,Energy,S&P 500,North America,NYSE,high
+EOG,EOG Resources,Energy,S&P 500,North America,NYSE,high
+PXD,Pioneer Natural Resources,Energy,S&P 500,North America,NYSE,high
+DVN,Devon Energy,Energy,S&P 500,North America,NYSE,high
+MPC,Marathon Petroleum,Energy,S&P 500,North America,NYSE,high
+PSX,Phillips 66,Energy,S&P 500,North America,NYSE,high
+VLO,Valero Energy,Energy,S&P 500,North America,NYSE,high
+HES,Hess Corporation,Energy,S&P 500,North America,NYSE,high
+OXY,Occidental Petroleum,Energy,S&P 500,North America,NYSE,high
+HAL,Halliburton,Energy,S&P 500,North America,NYSE,high
+SLB,SLB (Schlumberger),Energy,S&P 500,North America,NYSE,high
+BKR,Baker Hughes,Energy,S&P 500,North America,NASDAQ,high
+MRO,Marathon Oil,Energy,S&P 500,North America,NYSE,high
+APA,APA Corporation,Energy,S&P 500,North America,NASDAQ,high
+ECL,Ecolab,Materials,S&P 500,North America,NYSE,high
+PPG,PPG Industries,Materials,S&P 500,North America,NYSE,high
+ALB,Albemarle,Materials,S&P 500,North America,NYSE,high
+MOS,Mosaic,Materials,S&P 500,North America,NYSE,high
+NEM,Newmont,Materials,S&P 500,North America,NYSE,high
+FCX,Freeport-McMoRan,Materials,S&P 500,North America,NYSE,high
+IP,International Paper,Materials,S&P 500,North America,NYSE,high
+PKG,Packaging Corp,Materials,S&P 500,North America,NYSE,high
+AVY,Avery Dennison,Materials,S&P 500,North America,NYSE,high
+AEP,American Electric Power,Utilities,S&P 500,North America,NASDAQ,high
+EXC,Exelon,Utilities,S&P 500,North America,NASDAQ,high
+SRE,Sempra Energy,Utilities,S&P 500,North America,NYSE,high
+XEL,Xcel Energy,Utilities,S&P 500,North America,NASDAQ,high
+ES,Eversource Energy,Utilities,S&P 500,North America,NYSE,high
+FE,FirstEnergy,Utilities,S&P 500,North America,NYSE,high
+PPL,PPL Corporation,Utilities,S&P 500,North America,NYSE,high
+NI,NiSource,Utilities,S&P 500,North America,NYSE,high
+WEC,WEC Energy Group,Utilities,S&P 500,North America,NYSE,high
+AES,AES Corporation,Utilities,S&P 500,North America,NYSE,high
+AMT,American Tower,Real Estate,S&P 500,North America,NYSE,high
+CCI,Crown Castle,Real Estate,S&P 500,North America,NYSE,high
+EQIX,Equinix,Real Estate,S&P 500,North America,NASDAQ,high
+DLR,Digital Realty,Real Estate,S&P 500,North America,NYSE,high
+VTR,Ventas,Real Estate,S&P 500,North America,NYSE,high
+WELL,Welltower,Real Estate,S&P 500,North America,NYSE,high
+AVB,AvalonBay Communities,Real Estate,S&P 500,North America,NYSE,high
+EQR,Equity Residential,Real Estate,S&P 500,North America,NYSE,high
+MAA,Mid-America Apartment,Real Estate,S&P 500,North America,NYSE,high
+O,Realty Income,Real Estate,S&P 500,North America,NYSE,high
+SPG,Simon Property Group,Real Estate,S&P 500,North America,NYSE,high
