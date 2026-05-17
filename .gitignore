@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+.env
+.env.local
+
+# Data & logs (runtime artifacts)
+data/*.db
+data/*.sqlite
+data/cache/
+logs/
+*.log
+
+# Streamlit
+.streamlit/secrets.toml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Notebooks
+.ipynb_checkpoints/

@@ -1,0 +1,38 @@
+ticker,name,sector,segment
+A2A.MI,A2A,Utilities,FTSE MIB
+AMP.MI,Amplifon,Healthcare,FTSE MIB
+AZM.MI,Azimut Holding,Financial Services,FTSE MIB
+BAMI.MI,Banco BPM,Financials,FTSE MIB
+BMED.MI,Banca Mediolanum,Financials,FTSE MIB
+BMPS.MI,Banca Monte Paschi Siena,Financials,FTSE MIB
+BPE.MI,BPER Banca,Financials,FTSE MIB
+BZU.MI,Buzzi,Materials,FTSE MIB
+CPR.MI,Davide Campari-Milano,Consumer Staples,FTSE MIB
+DIA.MI,Diasorin,Healthcare,FTSE MIB
+ENEL.MI,Enel,Utilities,FTSE MIB
+ENI.MI,Eni,Energy,FTSE MIB
+ERG.MI,ERG,Utilities,FTSE MIB
+FBK.MI,FinecoBank,Financials,FTSE MIB
+G.MI,Assicurazioni Generali,Financials,FTSE MIB
+HER.MI,Hera,Utilities,FTSE MIB
+INW.MI,Inwit,Communication Services,FTSE MIB
+IP.MI,Interpump Group,Industrials,FTSE MIB
+ISP.MI,Intesa Sanpaolo,Financials,FTSE MIB
+LDO.MI,Leonardo,Industrials,FTSE MIB
+MB.MI,Mediobanca,Financials,FTSE MIB
+MONC.MI,Moncler,Consumer Discretionary,FTSE MIB
+NEXI.MI,Nexi,Technology,FTSE MIB
+PIRC.MI,Pirelli & C,Consumer Discretionary,FTSE MIB
+PRY.MI,Prysmian,Industrials,FTSE MIB
+PST.MI,Poste Italiane,Financials,FTSE MIB
+RACE.MI,Ferrari,Consumer Discretionary,FTSE MIB
+REC.MI,Recordati,Healthcare,FTSE MIB
+SPM.MI,Saipem,Energy,FTSE MIB
+SRG.MI,Snam,Utilities,FTSE MIB
+STLAM.MI,Stellantis,Consumer Discretionary,FTSE MIB
+STMMI.MI,STMicroelectronics,Technology,FTSE MIB
+TEN.MI,Tenaris,Energy,FTSE MIB
+TIT.MI,Telecom Italia,Communication Services,FTSE MIB
+TRN.MI,Terna,Utilities,FTSE MIB
+UCG.MI,UniCredit,Financials,FTSE MIB
+UNI.MI,Unipol Gruppo,Financials,FTSE MIB

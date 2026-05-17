@@ -1,0 +1,118 @@
+# ============================================================
+# AndreaTrading - configurazione di default
+# ============================================================
+
+mode: paper            # paper | live  (live richiede credenziali IBKR + flag esplicito)
+base_currency: EUR
+timezone: Europe/Rome
+
+# ------------------------------------------------------------
+# Capitale e allocazione
+# ------------------------------------------------------------
+capital:
+  initial: 1000.0      # capitale di partenza in EUR (paper)
+  # Allocazione per orizzonte temporale
+  allocation:
+    short_medium: 0.80   # 80% breve/medio termine
+    long_term: 0.20      # 20% lungo termine
+  # Riserva liquida sempre disponibile
+  cash_reserve_pct: 0.10
+
+# ------------------------------------------------------------
+# Universo titoli
+# ------------------------------------------------------------
+universe:
+  files:
+    - config/universe/ftse_mib.csv
+  # Filtri di liquidità minimi (per non comprare titoli sottili)
+  min_avg_daily_volume_eur: 500000
+  min_market_cap_eur: 100000000
+
+# ------------------------------------------------------------
+# Pesi multi-fattore per orizzonte
+# (sono i prior; il learning engine li adatta nel tempo)
+# ------------------------------------------------------------
+weights:
+  short_medium:
+    technical: 0.45
+    fundamental: 0.25
+    ml_forecast: 0.15
+    sentiment: 0.15
+  long_term:
+    technical: 0.15
+    fundamental: 0.55
+    ml_forecast: 0.10
+    sentiment: 0.05
+
+# Soglie di decisione sullo score aggregato [-100, +100]
+decision_thresholds:
+  strong_buy: 70
+  buy: 40
+  hold_upper: 40
+  hold_lower: -25
+  sell: -25
+  strong_sell: -55
+
+# ------------------------------------------------------------
+# Risk management - vincoli rigidi
+# ------------------------------------------------------------
+risk:
+  max_position_pct: 0.10           # max 10% capitale per singolo titolo
+  max_sector_pct: 0.30             # max 30% per settore
+  max_concurrent_positions: 15
+  stop_loss:
+    method: atr                    # atr | percent | trailing
+    atr_multiple: 2.5
+    fallback_pct: 0.07             # stop al -7% se ATR non disponibile
+  trailing_stop_activate_at_pct: 0.05   # attiva trailing dopo +5%
+  drawdown_circuit_breaker_pct: 0.15    # ferma tutto se equity scende -15% dal picco
+
+# ------------------------------------------------------------
+# Data quality - se i dati non passano i check non si opera
+# ------------------------------------------------------------
+data_quality:
+  min_history_days: 200             # almeno 200 giorni di storia
+  max_missing_pct: 0.02             # max 2% di valori mancanti
+  max_gap_days: 5                   # max gap di 5 giorni consecutivi
+  reject_if_no_fundamentals: false  # se mancano i fondamentali usa solo tecnico ridotto
+  cross_validate_sources: true      # confronto fra fonti quando possibile
+
+# ------------------------------------------------------------
+# Loop di esecuzione
+# ------------------------------------------------------------
+orchestrator:
+  cycle_interval_seconds: 300       # ogni 5 min (compatibile con yfinance 15min delay)
+  market_hours:
+    open: "09:00"
+    close: "17:30"
+  trade_only_market_hours: true
+  cooldown_after_loss_minutes: 1440 # 24h no auto-adjust dopo perdita
+
+# ------------------------------------------------------------
+# Learning engine - safeguards anti-overfitting
+# ------------------------------------------------------------
+learning:
+  enabled: true
+  min_trades_before_adjust: 30
+  significance_p_value: 0.05
+  max_weight_delta: 0.20            # se modifica >20% chiede conferma utente
+  walk_forward_validation: true
+
+# ------------------------------------------------------------
+# Broker
+# ------------------------------------------------------------
+broker:
+  paper:
+    commission_per_trade_eur: 2.95  # simula commissioni IBKR Italia
+    slippage_bps: 5                 # 0.05% di slippage simulato
+  ibkr:
+    host: 127.0.0.1
+    port: 7497                      # 7497 paper TWS, 7496 live TWS, 4002 IB Gateway paper
+    client_id: 1
+
+# ------------------------------------------------------------
+# Storage
+# ------------------------------------------------------------
+storage:
+  db_path: data/andreatrading.db
+  cache_path: data/cache
