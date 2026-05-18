@@ -328,7 +328,10 @@ elif page == "Storico Trade":
                 return ""
             return "color: #00c853" if val > 0 else "color: #d32f2f"
 
-        styled = trades.style.applymap(_color_pnl, subset=["P&L (€)", "P&L (%)"])
+        try:
+            styled = trades.style.map(_color_pnl, subset=["P&L (€)", "P&L (%)"])
+        except AttributeError:
+            styled = trades.style.applymap(_color_pnl, subset=["P&L (€)", "P&L (%)"])
         st.dataframe(styled, use_container_width=True, height=600)
 
 # ============================================================
