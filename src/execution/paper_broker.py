@@ -1,7 +1,7 @@
 """Broker simulato - simula commissioni, slippage e tiene contabilità su SQLite."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..utils.config import load_config
 from ..utils.db import connect
@@ -9,7 +9,7 @@ from .broker_base import Broker, OrderResult, Position
 
 
 def _now() -> str:
-    return datetime.utcnow().isoformat(timespec="seconds")
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 class PaperBroker(Broker):
@@ -29,7 +29,7 @@ class PaperBroker(Broker):
                     INSERT INTO equity_curve
                     (timestamp, cash, positions_value, total_equity, drawdown_pct)
                     VALUES (?, ?, 0, ?, 0)
-                """, (datetime.utcnow(), self._initial, self._initial))
+                """, (datetime.now(timezone.utc), self._initial, self._initial))
 
     def cash(self) -> float:
         with connect() as c:
@@ -68,7 +68,7 @@ class PaperBroker(Broker):
             return OrderResult(False, ticker, "BUY", quantity, fill, self.commission,
                                 _now(), "insufficient_cash")
 
-        ts = datetime.utcnow()
+        ts = datetime.now(timezone.utc)
         with connect() as c:
             cur = c.execute("""
                 INSERT INTO trades (ticker, side, quantity, price, commission,
@@ -118,7 +118,7 @@ class PaperBroker(Broker):
                                     "insufficient_position")
 
             fill = self._apply_slippage(ref_price, "SELL")
-            ts = datetime.utcnow()
+            ts = datetime.now(timezone.utc)
             pnl = (fill - pos["avg_price"]) * quantity - self.commission
             pnl_pct = ((fill / pos["avg_price"]) - 1) if pos["avg_price"] else 0
 

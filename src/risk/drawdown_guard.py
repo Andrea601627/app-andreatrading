@@ -11,7 +11,7 @@ limitata al capitale investito.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..utils.config import load_config
 from ..utils.db import connect
@@ -64,7 +64,7 @@ def trip(status: GuardStatus) -> None:
             INSERT INTO circuit_breaker (triggered_at, reason, equity_at_trigger,
                                           peak_equity, drawdown_pct)
             VALUES (?, ?, ?, ?, ?)
-        """, (datetime.utcnow(), status.reason, status.current_equity,
+        """, (datetime.now(timezone.utc), status.reason, status.current_equity,
               status.peak_equity, status.drawdown_pct))
 
 
@@ -74,7 +74,7 @@ def resolve(resolved_by: str = "user") -> None:
             UPDATE circuit_breaker
             SET resolved_at = ?, resolved_by = ?
             WHERE resolved_at IS NULL
-        """, (datetime.utcnow(), resolved_by))
+        """, (datetime.now(timezone.utc), resolved_by))
 
 
 def record_equity(cash: float, positions_value: float) -> float:
@@ -87,5 +87,5 @@ def record_equity(cash: float, positions_value: float) -> float:
             INSERT OR REPLACE INTO equity_curve
                 (timestamp, cash, positions_value, total_equity, drawdown_pct)
             VALUES (?, ?, ?, ?, ?)
-        """, (datetime.utcnow(), cash, positions_value, total, dd))
+        """, (datetime.now(timezone.utc), cash, positions_value, total, dd))
     return total

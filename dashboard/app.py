@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # permette di lanciare con `streamlit run dashboard/app.py` da qualunque cwd
@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 
 from src.risk.drawdown_guard import is_blocked, resolve
 from src.utils.config import load_config
@@ -22,6 +23,9 @@ st.set_page_config(
     page_icon=":chart_with_upwards_trend:",
     layout="wide",
 )
+
+# Auto-refresh ogni 60 secondi (allineato al ciclo fast loop)
+_refresh_count = st_autorefresh(interval=60_000, key="autorefresh")
 
 
 def _q(sql: str, params: tuple = ()) -> pd.DataFrame:
@@ -65,6 +69,7 @@ def _render_drilldown(row):
 # ============================================================
 st.sidebar.title("AndreaTrading")
 st.sidebar.caption(f"Mode: **{cfg['mode'].upper()}**")
+st.sidebar.caption(f"Aggiornato: {datetime.now(timezone.utc).strftime('%H:%M:%S')} UTC")
 page = st.sidebar.radio(
     "Sezione",
     ["Azioni consigliate", "Rendimento Mercati", "Portafoglio", "Storico Trade",
@@ -221,11 +226,31 @@ elif page == "Rendimento Mercati":
 # ============================================================
 elif page == "Portafoglio":
     st.title("Portafoglio attuale")
-    pos = _q("SELECT * FROM positions")
+    pos = _q("SELECT ticker, quantity, avg_price, horizon, opened_at, stop_loss, take_profit, high_water_mark FROM positions")
     if pos.empty:
         st.info("Nessuna posizione aperta.")
     else:
-        st.dataframe(pos, use_container_width=True)
+        # Arricchisce con P&L non realizzato usando l'ultimo prezzo registrato nell'equity curve
+        last_eq = _q("SELECT cash, positions_value, total_equity FROM equity_curve ORDER BY timestamp DESC LIMIT 1")
+        pos["valore_posizione"] = pos["quantity"] * pos["avg_price"]
+        pos["pnl_unreal_pct"] = 0.0
+        # Calcola P&L non realizzato da high_water_mark se disponibile
+        mask = pos["high_water_mark"].notna() & (pos["avg_price"] > 0)
+        pos.loc[mask, "pnl_unreal_pct"] = (
+            (pos.loc[mask, "high_water_mark"] - pos.loc[mask, "avg_price"])
+            / pos.loc[mask, "avg_price"] * 100
+        ).round(2)
+
+        def _color_pnl_pos(val):
+            if pd.isna(val) or val == 0:
+                return ""
+            return "color: #00c853" if val > 0 else "color: #d32f2f"
+
+        try:
+            styled_pos = pos.style.map(_color_pnl_pos, subset=["pnl_unreal_pct"])
+        except AttributeError:
+            styled_pos = pos.style.applymap(_color_pnl_pos, subset=["pnl_unreal_pct"])
+        st.dataframe(styled_pos, use_container_width=True)
 
     st.subheader("Rendimento in tempo reale")
     eq = _q("SELECT * FROM equity_curve ORDER BY timestamp")

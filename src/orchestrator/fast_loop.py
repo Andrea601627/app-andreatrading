@@ -21,7 +21,7 @@ import yfinance as yf
 
 from ..data.screener import run as screener_run
 from ..execution.order_manager import get_broker
-from ..risk.drawdown_guard import is_blocked, record_equity
+from ..risk.drawdown_guard import check as drawdown_check, is_blocked, record_equity, trip as drawdown_trip
 from ..risk.profit_guard import check as profit_guard_check
 from ..strategy.momentum import detect as detect_momentum
 from ..utils.config import load_config
@@ -155,7 +155,7 @@ def _df_today_only(df: pd.DataFrame) -> pd.DataFrame:
         idx = df.index.tz_convert("UTC") if df.index.tz else df.index.tz_localize("UTC")
         return df[idx.date == today]
     except Exception:
-        return df
+        return pd.DataFrame()
 
 
 def _min_qty(price: float, commission_eur: float, min_net_gain: float) -> int:
@@ -186,18 +186,22 @@ def run_fast_cycle() -> dict:
     if not all_tickers:
         return {"status": "no_tickers"}
 
-    # Download candele 1-minuto in parallelo
+    # Download candele 5-minuto in parallelo
     data_map: dict[str, pd.DataFrame | None] = {}
-    with ThreadPoolExecutor(max_workers=min(4, len(all_tickers))) as pool:
+    with ThreadPoolExecutor(max_workers=min(16, len(all_tickers))) as pool:
         futures = {pool.submit(_fetch_1m, t): t for t in all_tickers}
         for future in as_completed(futures):
-            ticker, df = future.result()
+            try:
+                ticker, df = future.result(timeout=15)
+            except Exception as e:
+                log.debug(f"Fetch timeout/error: {e}")
+                continue
             data_map[ticker] = df
 
     sells = 0
     buys = 0
 
-    # Equity totale per sizing
+    # Equity totale per sizing (snapshot iniziale)
     cash = broker.cash()
     pos_value = sum(
         p["quantity"] * float(data_map[t]["Close"].iloc[-1])
@@ -238,6 +242,8 @@ def run_fast_cycle() -> dict:
                 sells += 1
 
     # 2. Nuovi acquisti dalla watchlist
+    # Rilegge cash dopo le eventuali vendite — le vendite liberano liquidità
+    cash = broker.cash()
     open_count = len(_get_fast_positions())
     slow_scores = {w["ticker"]: w["score"] for w in watchlist}
 
@@ -301,13 +307,21 @@ def run_fast_cycle() -> dict:
             cash -= qty * current_price
 
     # Aggiorna equity curve ad ogni ciclo fast
+    current_positions = _get_fast_positions()
     pos_value = sum(
         p["quantity"] * float(data_map[t]["Close"].iloc[-1])
         if data_map.get(t) is not None
         else p["quantity"] * p["avg_price"]
-        for t, p in _get_fast_positions().items()
+        for t, p in current_positions.items()
     )
-    record_equity(broker.cash(), pos_value)
+    current_cash = broker.cash()
+    total_equity_now = record_equity(current_cash, pos_value)
+
+    # Valuta il circuit breaker ad ogni ciclo fast (non solo nel loop lento)
+    dd_status = drawdown_check(total_equity_now)
+    if dd_status.triggered:
+        drawdown_trip(dd_status)
+        log.warning(f"CIRCUIT BREAKER ATTIVATO: {dd_status.reason}")
 
     return {"status": "ok", "buys": buys, "sells": sells, "fast_positions": open_count}
 
