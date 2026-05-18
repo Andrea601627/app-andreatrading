@@ -23,61 +23,57 @@ class MomentumSignal:
 
 
 def detect(ticker: str, df_1m: pd.DataFrame, cfg_momentum: dict) -> MomentumSignal:
+    """Trend following: compra se il titolo è in trend positivo oggi.
+
+    Logica:
+    - Confronta prezzo attuale con il prezzo di chiusura di ieri (prima candela del df)
+    - Se è salito → BUY (il trend della watchlist continua oggi)
+    - Se è sceso → SELL (il trend si è invertito)
+    - Forza proporzionale all'entità del movimento
+    Il filtro principale è lo screener (watchlist): qui si valida solo la direzione.
+    """
     _none = MomentumSignal(ticker=ticker, direction="NONE", strength=0.0,
                            momentum_pct=0.0, volume_confirmed=False, size_pct=0.0)
 
-    if df_1m is None or len(df_1m) < 4:
+    if df_1m is None or len(df_1m) < 2:
         return _none
 
-    threshold = cfg_momentum["threshold_pct"]
     strong_thr = cfg_momentum["strong_threshold_pct"]
-    vol_mult = cfg_momentum["volume_multiplier"]
+    vol_mult   = cfg_momentum["volume_multiplier"]
 
-    prices = df_1m["Close"].dropna()
-    opens  = df_1m["Open"].dropna()
+    prices  = df_1m["Close"].dropna()
     volumes = df_1m["Volume"].dropna()
 
     if len(prices) < 2:
         return _none
 
-    current = float(prices.iloc[-1])
-
-    # --- Trend giornaliero: dal prezzo di apertura ad ora ---
-    day_open = float(opens.iloc[0])   # prima candela di oggi = apertura
-    if day_open <= 0:
+    current    = float(prices.iloc[-1])
+    prev_close = float(prices.iloc[0])   # prima candela disponibile oggi = riferimento
+    if prev_close <= 0:
         return _none
-    day_trend = (current - day_open) / day_open
 
-    # --- Momentum recente: ultimi 3 candles (15 min) ---
-    lookback = min(cfg_momentum["lookback_minutes"], len(prices) - 1)
-    past = float(prices.iloc[-lookback])
-    recent_mom = (current - past) / past if past > 0 else 0.0
+    momentum_pct = (current - prev_close) / prev_close
 
-    # Segnale: trend giornaliero positivo + momentum recente non in contraddizione
-    # (non deve stare già invertendo rispetto al trend del giorno)
-    if day_trend > 0 and recent_mom >= -threshold:
+    # Direzione: basta che sia positivo o negativo, nessuna soglia minima
+    if momentum_pct > 0:
         direction = "BUY"
-        momentum_pct = day_trend
-    elif day_trend < 0 and recent_mom <= threshold:
+    elif momentum_pct < 0:
         direction = "SELL"
-        momentum_pct = day_trend
     else:
         return _none
 
     abs_mom = abs(momentum_pct)
-    if abs_mom < threshold:
-        return _none
 
-    # Conferma volume
+    # Conferma volume (riduce sizing se assente, non blocca)
     avg_vol = float(volumes.iloc[-20:].mean()) if len(volumes) >= 20 else float(volumes.mean())
     cur_vol = float(volumes.iloc[-1])
     volume_confirmed = (cur_vol >= avg_vol * vol_mult) if avg_vol > 0 else False
 
-    # Forza del segnale
+    # Forza del segnale in base all'entità del movimento
     if abs_mom >= strong_thr:
         strength = 1.0
         size_pct = cfg_momentum["strong_size_pct"]
-    elif abs_mom >= (threshold + strong_thr) / 2:
+    elif abs_mom >= strong_thr / 2:
         strength = 0.65
         size_pct = cfg_momentum["medium_size_pct"]
     else:
