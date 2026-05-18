@@ -13,7 +13,7 @@ import json
 import math
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, time as dtime
+from datetime import datetime, time as dtime, timezone
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -42,12 +42,43 @@ def _is_market_hours(cfg: dict) -> bool:
     return now_it.weekday() < 5 and open_t <= now <= close_t
 
 
+def _open_market_suffixes() -> set[str]:
+    """Restituisce i suffissi dei mercati attualmente aperti (orario UTC)."""
+    now = datetime.now(timezone.utc)
+    if now.weekday() >= 5:
+        return set()
+    h = now.hour + now.minute / 60
+    open_sfx: set[str] = set()
+    if 7.0 <= h <= 15.5:                        # Borsa Italiana, Euronext
+        open_sfx.update([".MI", ".PA", ".DE", ".AS", ".BR", ".MC"])
+    if 8.0 <= h <= 16.5:                        # LSE Londra
+        open_sfx.add(".L")
+    if 13.5 <= h <= 20.0:                       # NYSE / NASDAQ
+        open_sfx.add("US")
+    if h <= 6.0 or h >= 23.5:                   # Tokyo
+        open_sfx.add(".T")
+    if 1.5 <= h <= 8.0:                         # Hong Kong
+        open_sfx.add(".HK")
+    return open_sfx
+
+
+def _ticker_market_open(ticker: str, open_sfx: set[str]) -> bool:
+    """True se il mercato del ticker è attualmente aperto."""
+    for sfx in [".MI", ".PA", ".DE", ".L", ".AS", ".BR", ".MC", ".T", ".HK"]:
+        if ticker.upper().endswith(sfx.upper()):
+            return sfx in open_sfx
+    return "US" in open_sfx   # nessun suffisso = titolo USA
+
+
 def _get_watchlist(limit: int) -> list[dict]:
-    """Top titoli per il fast loop.
+    """Top titoli per il fast loop, filtrati per mercato aperto.
 
     Priorità 1: segnali recenti dal loop lento (score > 0, quality_ok).
     Priorità 2: screener per rendimento 5-giorni (usato se segnali insufficienti).
     """
+    open_sfx = _open_market_suffixes()
+    log.info(f"Mercati aperti ora: {open_sfx or 'nessuno'}")
+
     with connect() as c:
         rows = c.execute("""
             SELECT s.ticker, s.score
@@ -58,16 +89,21 @@ def _get_watchlist(limit: int) -> list[dict]:
             ) latest ON s.ticker = latest.ticker AND s.generated_at = latest.mx
             WHERE s.score > 0 AND s.quality_ok = 1 AND s.horizon = 'short_medium'
             ORDER BY s.score DESC
-            LIMIT ?
-        """, (limit,)).fetchall()
-    result = [{"ticker": r["ticker"], "score": float(r["score"])} for r in rows]
+        """).fetchall()
 
-    # Se il loop lento non ha ancora generato segnali usa lo screener
+    # Filtra solo titoli con mercato aperto
+    result = [
+        {"ticker": r["ticker"], "score": float(r["score"])}
+        for r in rows
+        if _ticker_market_open(r["ticker"], open_sfx)
+    ][:limit]
+
+    # Se pochi segnali usa lo screener (solo mercati aperti)
     if len(result) < limit // 2:
-        screened = screener_run(top_n=limit)
+        screened = screener_run(top_n=limit * 2)
         seen = {r["ticker"] for r in result}
         for s in screened:
-            if s.ticker not in seen:
+            if s.ticker not in seen and _ticker_market_open(s.ticker, open_sfx):
                 result.append({"ticker": s.ticker, "score": s.return_5d * 100})
                 if len(result) >= limit:
                     break
