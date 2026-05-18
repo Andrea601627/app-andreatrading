@@ -142,9 +142,9 @@ momentum:
 
   # Rilevamento trend (candele 5-minuto, lookback 3 candele = 15 min reali)
   lookback_minutes: 3
-  threshold_pct: 0.003            # 0.3% movimento minimo su 15 min
-  strong_threshold_pct: 0.007     # 0.7% per segnale forte
-  volume_multiplier: 1.1          # volume corrente >= 1.1x media 20 periodi
+  threshold_pct: 0.001            # 0.1% movimento minimo su 15 min
+  strong_threshold_pct: 0.004     # 0.4% per segnale forte
+  volume_multiplier: 1.1          # usato per sizing, non più blocco obbligatorio
 
   # Quanti titoli dalla watchlist del loop lento
   watchlist_size: 30

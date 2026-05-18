@@ -47,10 +47,11 @@ def detect(ticker: str, df_1m: pd.DataFrame, cfg_momentum: dict) -> MomentumSign
     cur_vol = float(volumes.iloc[-1])
     volume_confirmed = (cur_vol >= avg_vol * vol_mult) if avg_vol > 0 else False
 
-    if abs_mom < threshold or not volume_confirmed:
+    if abs_mom < threshold:
         return _none
+    # Volume non è più un blocco obbligatorio — riduce solo il sizing se assente
 
-    # Forza del segnale e sizing
+    # Forza del segnale e sizing (volume conferma aumenta il sizing)
     if abs_mom >= strong_thr:
         strength = 1.0
         size_pct = cfg_momentum["strong_size_pct"]
@@ -60,6 +61,10 @@ def detect(ticker: str, df_1m: pd.DataFrame, cfg_momentum: dict) -> MomentumSign
     else:
         strength = 0.35
         size_pct = cfg_momentum["weak_size_pct"]
+
+    # Senza conferma volume riduci il sizing del 30%
+    if not volume_confirmed:
+        size_pct *= 0.7
 
     return MomentumSignal(
         ticker=ticker,
