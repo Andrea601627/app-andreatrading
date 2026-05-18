@@ -21,7 +21,7 @@ import yfinance as yf
 
 from ..data.screener import run as screener_run
 from ..execution.order_manager import get_broker
-from ..risk.drawdown_guard import is_blocked
+from ..risk.drawdown_guard import is_blocked, record_equity
 from ..risk.profit_guard import check as profit_guard_check
 from ..strategy.momentum import detect as detect_momentum
 from ..utils.config import load_config
@@ -248,6 +248,15 @@ def run_fast_cycle() -> dict:
             buys += 1
             open_count += 1
             cash -= qty * current_price
+
+    # Aggiorna equity curve ad ogni ciclo fast
+    pos_value = sum(
+        p["quantity"] * float(data_map[t]["Close"].iloc[-1])
+        if data_map.get(t) is not None
+        else p["quantity"] * p["avg_price"]
+        for t, p in _get_fast_positions().items()
+    )
+    record_equity(broker.cash(), pos_value)
 
     return {"status": "ok", "buys": buys, "sells": sells, "fast_positions": open_count}
 
