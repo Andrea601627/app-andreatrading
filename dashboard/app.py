@@ -233,9 +233,8 @@ elif page == "Portafoglio":
     eq = _q("SELECT * FROM equity_curve ORDER BY timestamp")
     if not eq.empty:
         eq["timestamp"] = pd.to_datetime(eq["timestamp"])
-        # Usa il capitale iniziale dal config come riferimento fisso
-        cfg_dash = load_config()
-        initial = cfg_dash["capital"]["initial"]
+        # Usa il primo punto registrato come base zero
+        initial = eq.iloc[0]["total_equity"]
         eq["rendimento_eur"] = eq["total_equity"] - initial
 
         last = eq.iloc[-1]
