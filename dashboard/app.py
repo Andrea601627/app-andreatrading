@@ -83,42 +83,78 @@ if is_blocked():
         st.rerun()
 
 # ============================================================
-# Pagina 1: Azioni consigliate
+# Pagina 1: Azioni consigliate (Trend Following)
 # ============================================================
 if page == "Azioni consigliate":
-    st.title("Azioni consigliate ora")
-    st.caption("Top segnali generati dall'ultimo ciclo di analisi")
+    st.title("Titoli in trend ora")
+    st.caption("Top titoli per momentum di prezzo — aggiornato ad ogni ciclo (60s)")
 
-    df = _q("""
-        SELECT s.* FROM signals s
-        INNER JOIN (
-            SELECT ticker, MAX(generated_at) AS mx FROM signals GROUP BY ticker
-        ) latest ON s.ticker = latest.ticker AND s.generated_at = latest.mx
-        WHERE s.horizon = 'short_medium'
-        ORDER BY s.generated_at DESC
-    """)
-    if df.empty:
-        st.info("Nessun segnale ancora generato. Lancia il primo ciclo:\n\n"
-                "`python -m src.orchestrator.main_loop --once`")
+    from src.data.screener import run as screener_run
+    from src.data.universe import load_universe
+
+    universe_map = {a.ticker: a for a in load_universe()}
+
+    with st.spinner("Calcolo trend in corso..."):
+        screened = screener_run(top_n=200)
+
+    # Filtra solo titoli con dati e calcola score composito
+    rows_trend = []
+    for s in screened:
+        if not s.cached:
+            continue
+        score = round((s.return_5d * 0.70 + s.return_1d * 0.30) * 100, 2)
+        asset = universe_map.get(s.ticker)
+        rows_trend.append({
+            "ticker": s.ticker,
+            "nome": asset.name if asset else "",
+            "mercato": asset.market if asset else "",
+            "settore": asset.sector if asset else "",
+            "trend_5gg_%": round(s.return_5d * 100, 2),
+            "slancio_1gg_%": round(s.return_1d * 100, 2),
+            "score_trend": score,
+        })
+
+    rows_trend.sort(key=lambda x: x["score_trend"], reverse=True)
+    df_trend = pd.DataFrame(rows_trend)
+
+    if df_trend.empty:
+        st.info("Nessun dato in cache. Attendi il primo ciclo del loop.")
     else:
-        buys = df[df["decision"].isin(["BUY", "STRONG_BUY"])].sort_values("score", ascending=False)
-        sells = df[df["decision"].isin(["SELL", "STRONG_SELL"])].sort_values("score")
+        # Posizioni già aperte
+        open_tickers = set(_q("SELECT ticker FROM positions")["ticker"].tolist()) if not _q("SELECT ticker FROM positions").empty else set()
+
+        in_trend    = df_trend[df_trend["score_trend"] > 0].head(30)
+        contro_trend = df_trend[df_trend["score_trend"] < 0].tail(15).iloc[::-1]
 
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader(f":green[COMPRA] ({len(buys)})")
-            if buys.empty:
-                st.write("Nessun segnale BUY attivo.")
-            for _, row in buys.head(15).iterrows():
-                with st.expander(f"**{row['ticker']}** — {row['decision']} (score {row['score']:.1f})"):
-                    _render_drilldown(row)
+            st.subheader(f":green[IN TREND — possibili acquisti] ({len(in_trend)})")
+            def _color_trend(val):
+                if pd.isna(val): return ""
+                return "color: #00c853" if val > 0 else "color: #d32f2f"
+            try:
+                styled = in_trend.style.map(_color_trend, subset=["trend_5gg_%", "slancio_1gg_%", "score_trend"])
+            except AttributeError:
+                styled = in_trend.style.applymap(_color_trend, subset=["trend_5gg_%", "slancio_1gg_%", "score_trend"])
+            st.dataframe(styled, use_container_width=True, height=500)
+
         with col2:
-            st.subheader(f":red[VENDI] ({len(sells)})")
-            if sells.empty:
-                st.write("Nessun segnale SELL attivo.")
-            for _, row in sells.head(15).iterrows():
-                with st.expander(f"**{row['ticker']}** — {row['decision']} (score {row['score']:.1f})"):
-                    _render_drilldown(row)
+            st.subheader(f":red[CONTRO TREND — da evitare/vendere] ({len(contro_trend)})")
+            try:
+                styled2 = contro_trend.style.map(_color_trend, subset=["trend_5gg_%", "slancio_1gg_%", "score_trend"])
+            except AttributeError:
+                styled2 = contro_trend.style.applymap(_color_trend, subset=["trend_5gg_%", "slancio_1gg_%", "score_trend"])
+            st.dataframe(styled2, use_container_width=True, height=500)
+
+        if open_tickers:
+            st.subheader("Posizioni aperte vs trend attuale")
+            pos_trend = df_trend[df_trend["ticker"].isin(open_tickers)]
+            if not pos_trend.empty:
+                try:
+                    styled3 = pos_trend.style.map(_color_trend, subset=["trend_5gg_%", "slancio_1gg_%", "score_trend"])
+                except AttributeError:
+                    styled3 = pos_trend.style.applymap(_color_trend, subset=["trend_5gg_%", "slancio_1gg_%", "score_trend"])
+                st.dataframe(styled3, use_container_width=True)
 
 # ============================================================
 # Pagina 2: Rendimento Mercati
