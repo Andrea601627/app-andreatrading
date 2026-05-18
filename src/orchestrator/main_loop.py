@@ -12,6 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from datetime import datetime, time as dtime
+from zoneinfo import ZoneInfo
 
 from ..analysis.regime import detect as detect_regime
 from ..data.fetcher import get_last_price
@@ -39,11 +40,12 @@ log = get_logger()
 def _is_market_hours(cfg: dict) -> bool:
     if not cfg["orchestrator"]["trade_only_market_hours"]:
         return True
-    now = datetime.now().time()
+    tz = ZoneInfo("Europe/Rome")
+    now_it = datetime.now(tz)
+    now = now_it.time()
     open_t = dtime.fromisoformat(cfg["orchestrator"]["market_hours"]["open"])
     close_t = dtime.fromisoformat(cfg["orchestrator"]["market_hours"]["close"])
-    weekday = datetime.now().weekday()
-    return weekday < 5 and open_t <= now <= close_t
+    return now_it.weekday() < 5 and open_t <= now <= close_t
 
 
 def _portfolio_value(broker, price_map: dict[str, float]) -> tuple[float, float, float]:
