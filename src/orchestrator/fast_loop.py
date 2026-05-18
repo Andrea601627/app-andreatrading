@@ -245,7 +245,7 @@ def run_fast_cycle() -> dict:
 
         sig = detect_momentum(ticker, df, cfg_m)
         if sig.direction != "BUY":
-            log.debug(f"{ticker}: momentum={sig.momentum_pct:.3%} strength={sig.strength:.2f} → {sig.direction}")
+            log.info(f"{ticker}: momentum={sig.momentum_pct:.3%} vol_ok={sig.volume_confirmed} → {sig.direction}")
             continue
 
         log.info(f"{ticker}: segnale BUY momentum={sig.momentum_pct:.3%} strength={sig.strength:.2f} volume_ok={sig.volume_confirmed}")
