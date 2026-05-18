@@ -9,9 +9,12 @@ from pathlib import Path
 # permette di lanciare con `streamlit run dashboard/app.py` da qualunque cwd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
+from scipy import stats
 from streamlit_autorefresh import st_autorefresh
 
 from src.risk.drawdown_guard import is_blocked, resolve
@@ -73,7 +76,7 @@ st.sidebar.caption(f"Aggiornato: {datetime.now(timezone.utc).strftime('%H:%M:%S'
 page = st.sidebar.radio(
     "Sezione",
     ["Azioni consigliate", "Rendimento Mercati", "Portafoglio", "Storico Trade",
-     "Storico segnali", "Backtest", "Impostazioni"],
+     "Storico segnali", "Statistiche Avanzate", "Backtest", "Impostazioni"],
 )
 
 if is_blocked():
@@ -409,6 +412,352 @@ elif page == "Storico segnali":
                   "regime", "quality_ok"]],
             use_container_width=True,
         )
+
+# ============================================================
+# Pagina: Statistiche Avanzate
+# ============================================================
+elif page == "Statistiche Avanzate":
+    st.title("Statistiche Avanzate")
+    st.caption("Analisi statistica completa del comportamento del sistema di trading")
+
+    # Carica tutti i trade chiusi
+    df_all = _q("""
+        SELECT ticker, side, quantity, price, commission,
+               executed_at, closed_at, close_price, pnl, pnl_pct,
+               close_reason, horizon, score
+        FROM trades
+        WHERE side = 'SELL' AND pnl IS NOT NULL
+        ORDER BY executed_at
+    """)
+    df_buys = _q("""
+        SELECT ticker, executed_at, closed_at, price AS buy_price, score
+        FROM trades WHERE side = 'BUY' AND closed_at IS NOT NULL
+    """)
+
+    if df_all.empty:
+        st.info("Nessun trade chiuso ancora. Le statistiche appariranno dopo le prime vendite.")
+    else:
+        df_all["pnl"] = pd.to_numeric(df_all["pnl"], errors="coerce")
+        df_all["pnl_pct"] = pd.to_numeric(df_all["pnl_pct"], errors="coerce") * 100
+        df_all["executed_at"] = pd.to_datetime(df_all["executed_at"])
+        df_all["closed_at"] = pd.to_datetime(df_all["closed_at"])
+
+        wins = df_all[df_all["pnl"] > 0]
+        losses = df_all[df_all["pnl"] <= 0]
+        n = len(df_all)
+
+        # ── SEZIONE 1: KPI Riepilogo ─────────────────────────────────
+        st.subheader("Riepilogo generale")
+        c1,c2,c3,c4,c5,c6 = st.columns(6)
+        c1.metric("Trade totali", n)
+        c2.metric("Win rate", f"{len(wins)/n*100:.1f}%")
+        c3.metric("P&L totale", f"{df_all['pnl'].sum():.2f} €")
+        avg_win  = wins["pnl"].mean()  if not wins.empty  else 0
+        avg_loss = losses["pnl"].mean() if not losses.empty else 0
+        profit_factor = abs(wins["pnl"].sum() / losses["pnl"].sum()) if not losses.empty and losses["pnl"].sum() != 0 else float("inf")
+        c4.metric("Profit factor", f"{profit_factor:.2f}")
+        c5.metric("Guadagno medio", f"{avg_win:.2f} €")
+        c6.metric("Perdita media",  f"{avg_loss:.2f} €")
+
+        c7,c8,c9,c10 = st.columns(4)
+        best  = df_all.loc[df_all["pnl"].idxmax()]
+        worst = df_all.loc[df_all["pnl"].idxmin()]
+        c7.metric("Trade migliore",  f"{best['pnl']:.2f} € ({best['ticker']})")
+        c8.metric("Trade peggiore",  f"{worst['pnl']:.2f} € ({worst['ticker']})")
+        # Sharpe ratio (approssimato su serie P&L %)
+        if df_all["pnl_pct"].std() > 0:
+            sharpe = (df_all["pnl_pct"].mean() / df_all["pnl_pct"].std()) * (252 ** 0.5)
+        else:
+            sharpe = 0.0
+        # Sortino (solo deviazione downside)
+        downside = df_all[df_all["pnl_pct"] < 0]["pnl_pct"]
+        sortino = (df_all["pnl_pct"].mean() / downside.std() * (252**0.5)) if len(downside) > 1 and downside.std() > 0 else 0.0
+        c9.metric("Sharpe ratio",  f"{sharpe:.2f}")
+        c10.metric("Sortino ratio", f"{sortino:.2f}")
+
+        st.divider()
+
+        # ── SEZIONE 2: Tempi di detenzione ───────────────────────────
+        st.subheader("Analisi tempi di detenzione (holding time)")
+
+        if not df_buys.empty:
+            df_buys["executed_at"] = pd.to_datetime(df_buys["executed_at"])
+            df_buys["closed_at"]   = pd.to_datetime(df_buys["closed_at"])
+            df_buys["holding_min"] = (df_buys["closed_at"] - df_buys["executed_at"]).dt.total_seconds() / 60
+            df_buys = df_buys[df_buys["holding_min"] > 0]
+
+        if not df_buys.empty and len(df_buys) > 0:
+            h = df_buys["holding_min"]
+            media   = h.mean()
+            mediana = h.median()
+            try:
+                moda_val = float(stats.mode(h.round(0), keepdims=True).mode[0])
+            except Exception:
+                moda_val = float(h.round(0).value_counts().idxmax())
+
+            c1,c2,c3 = st.columns(3)
+            c1.metric("Media",   f"{media:.1f} min  ({media/60:.1f}h)")
+            c2.metric("Mediana", f"{mediana:.1f} min ({mediana/60:.1f}h)")
+            c3.metric("Moda",    f"{moda_val:.0f} min ({moda_val/60:.1f}h)")
+
+            # Unisci con esito per colorare il boxplot
+            df_buys_ext = df_buys.copy()
+            df_buys_ext = df_buys_ext.merge(
+                df_all[["ticker","executed_at","pnl"]].rename(columns={"executed_at":"sell_at"}),
+                left_on=["ticker","closed_at"], right_on=["ticker","sell_at"], how="left"
+            )
+            df_buys_ext["esito"] = df_buys_ext["pnl"].apply(
+                lambda x: "Vincente" if (pd.notna(x) and x > 0) else "Perdente"
+            )
+
+            fig_box = px.box(
+                df_buys_ext, x="esito", y="holding_min",
+                color="esito",
+                color_discrete_map={"Vincente": "#00c853", "Perdente": "#d32f2f"},
+                title="Boxplot: tempo di detenzione per esito (minuti)",
+                labels={"holding_min": "Minuti", "esito": ""},
+                points="all",
+            )
+            fig_box.update_layout(showlegend=False)
+            st.plotly_chart(fig_box, use_container_width=True)
+
+            # Istogramma tempi
+            fig_hist_t = px.histogram(
+                df_buys_ext, x="holding_min", color="esito",
+                color_discrete_map={"Vincente": "#00c853", "Perdente": "#d32f2f"},
+                nbins=30, barmode="overlay", opacity=0.7,
+                title="Distribuzione tempi di detenzione",
+                labels={"holding_min": "Minuti"},
+            )
+            st.plotly_chart(fig_hist_t, use_container_width=True)
+        else:
+            st.info("Dati holding time non ancora disponibili.")
+
+        st.divider()
+
+        # ── SEZIONE 3: Distribuzione P&L ─────────────────────────────
+        st.subheader("Distribuzione P&L e valori anomali")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            # Istogramma P&L con curva normale sovrapposta
+            mu, sigma = df_all["pnl_pct"].mean(), df_all["pnl_pct"].std()
+            x_range = np.linspace(df_all["pnl_pct"].min(), df_all["pnl_pct"].max(), 200)
+            normal_curve = stats.norm.pdf(x_range, mu, sigma)
+
+            fig_dist = go.Figure()
+            fig_dist.add_trace(go.Histogram(
+                x=df_all["pnl_pct"], histnorm="probability density",
+                name="P&L reale", marker_color="#1976d2", opacity=0.6,
+            ))
+            fig_dist.add_trace(go.Scatter(
+                x=x_range, y=normal_curve,
+                mode="lines", name="Distribuzione normale attesa",
+                line=dict(color="#ff6f00", width=2),
+            ))
+            fig_dist.add_vline(x=0, line_dash="dash", line_color="gray")
+            fig_dist.update_layout(title="Distribuzione P&L % vs curva normale",
+                                    xaxis_title="P&L %", yaxis_title="Densità")
+            st.plotly_chart(fig_dist, use_container_width=True)
+
+        with col2:
+            # Valori anomali (Z-score > 2)
+            z_scores = np.abs(stats.zscore(df_all["pnl_pct"].dropna()))
+            outliers = df_all[z_scores > 2][["ticker","executed_at","pnl","pnl_pct","close_reason"]]
+            st.markdown("**Valori anomali (Z-score > 2)**")
+            if outliers.empty:
+                st.success("Nessun valore anomalo rilevato.")
+            else:
+                def _color_pnl_out(val):
+                    if pd.isna(val): return ""
+                    return "color: #00c853" if val > 0 else "color: #d32f2f"
+                try:
+                    st.dataframe(outliers.style.map(_color_pnl_out, subset=["pnl","pnl_pct"]),
+                                  use_container_width=True)
+                except Exception:
+                    st.dataframe(outliers, use_container_width=True)
+
+            # Statistiche descrittive complete
+            st.markdown("**Statistiche descrittive P&L %**")
+            desc = df_all["pnl_pct"].describe(percentiles=[.1,.25,.5,.75,.9])
+            desc.index = ["Conteggio","Media","Dev. std","Min","10°%","25°%","50°%","75°%","90°%","Max"]
+            st.dataframe(desc.round(3).to_frame("Valore"), use_container_width=True)
+
+        st.divider()
+
+        # ── SEZIONE 4: Regressione lineare ───────────────────────────
+        st.subheader("Analisi di regressione: score di ingresso → P&L")
+        st.caption("Studia se esiste una relazione tra la forza del segnale al momento dell'acquisto e il profitto ottenuto")
+
+        df_reg = df_all[df_all["score"].notna() & df_all["pnl_pct"].notna()].copy()
+        df_reg["score"] = pd.to_numeric(df_reg["score"], errors="coerce")
+        df_reg = df_reg.dropna(subset=["score","pnl_pct"])
+
+        if len(df_reg) >= 5:
+            slope, intercept, r_value, p_value, std_err = stats.linregress(
+                df_reg["score"], df_reg["pnl_pct"]
+            )
+            x_fit = np.linspace(df_reg["score"].min(), df_reg["score"].max(), 100)
+            y_fit = slope * x_fit + intercept
+            # Intervallo di confidenza 95%
+            n_reg = len(df_reg)
+            t_crit = stats.t.ppf(0.975, df=n_reg - 2)
+            se_fit = std_err * np.sqrt(1/n_reg + (x_fit - df_reg["score"].mean())**2 /
+                                        ((df_reg["score"] - df_reg["score"].mean())**2).sum())
+            y_upper = y_fit + t_crit * se_fit
+            y_lower = y_fit - t_crit * se_fit
+
+            fig_reg = go.Figure()
+            fig_reg.add_trace(go.Scatter(
+                x=df_reg["score"], y=df_reg["pnl_pct"],
+                mode="markers",
+                marker=dict(
+                    color=df_reg["pnl_pct"],
+                    colorscale=[[0,"#d32f2f"],[0.5,"#888"],[1,"#00c853"]],
+                    size=7, opacity=0.7,
+                    colorbar=dict(title="P&L %"),
+                ),
+                name="Trade reali",
+                text=df_reg["ticker"],
+            ))
+            fig_reg.add_trace(go.Scatter(
+                x=x_fit, y=y_fit,
+                mode="lines", name="Retta di regressione",
+                line=dict(color="#ff6f00", width=2),
+            ))
+            fig_reg.add_trace(go.Scatter(
+                x=np.concatenate([x_fit, x_fit[::-1]]),
+                y=np.concatenate([y_upper, y_lower[::-1]]),
+                fill="toself", fillcolor="rgba(255,111,0,0.1)",
+                line=dict(color="rgba(0,0,0,0)"),
+                name="Intervallo confidenza 95%",
+            ))
+            fig_reg.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+            fig_reg.update_layout(
+                title="Grafico di dispersione: score ingresso vs P&L %",
+                xaxis_title="Score al momento dell'acquisto",
+                yaxis_title="P&L %",
+            )
+            st.plotly_chart(fig_reg, use_container_width=True)
+
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("R² (bontà fit)", f"{r_value**2:.3f}")
+            c2.metric("p-value", f"{p_value:.4f}")
+            c3.metric("Pendenza", f"{slope:.4f}")
+            c4.metric("Intercetta", f"{intercept:.4f}")
+
+            if p_value < 0.05:
+                st.success(f"Relazione **statisticamente significativa** (p={p_value:.4f} < 0.05). "
+                            f"{'Score più alto → miglior P&L' if slope > 0 else 'Score più alto → P&L peggiore'}.")
+            else:
+                st.warning(f"Relazione **non significativa** (p={p_value:.4f} > 0.05). "
+                            "Lo score di ingresso non predice bene il P&L con i dati attuali.")
+
+            # Previsione interattiva
+            st.markdown("**Simulatore di previsione**")
+            score_input = st.slider("Score ipotetico al momento dell'acquisto", -100, 100, 50)
+            predicted = slope * score_input + intercept
+            st.info(f"Con score = {score_input}, il modello stima un P&L di circa **{predicted:.2f}%**")
+        else:
+            st.info("Servono almeno 5 trade chiusi con score per la regressione.")
+
+        st.divider()
+
+        # ── SEZIONE 5: P&L per ora del giorno e motivo chiusura ──────
+        st.subheader("Quando e perché il sistema guadagna o perde")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            df_all["ora"] = df_all["executed_at"].dt.hour
+            by_hour = df_all.groupby("ora").agg(
+                pnl_medio=("pnl", "mean"),
+                n_trade=("pnl", "count"),
+                win_rate=("pnl", lambda x: (x > 0).mean() * 100),
+            ).reset_index()
+            fig_h = px.bar(by_hour, x="ora", y="pnl_medio",
+                           color="pnl_medio",
+                           color_continuous_scale=["#d32f2f","#888","#00c853"],
+                           color_continuous_midpoint=0,
+                           title="P&L medio per ora del giorno",
+                           labels={"ora":"Ora","pnl_medio":"P&L medio €"})
+            st.plotly_chart(fig_h, use_container_width=True)
+
+        with col2:
+            by_reason = df_all.groupby("close_reason").agg(
+                n=("pnl","count"),
+                pnl_medio=("pnl","mean"),
+                win_rate=("pnl", lambda x: (x>0).mean()*100),
+            ).reset_index().sort_values("pnl_medio", ascending=False)
+            fig_r = px.bar(by_reason, x="close_reason", y="pnl_medio",
+                           color="pnl_medio",
+                           color_continuous_scale=["#d32f2f","#888","#00c853"],
+                           color_continuous_midpoint=0,
+                           title="P&L medio per motivo di chiusura",
+                           labels={"close_reason":"Motivo","pnl_medio":"P&L medio €"},
+                           text="n")
+            st.plotly_chart(fig_r, use_container_width=True)
+
+        st.divider()
+
+        # ── SEZIONE 6: Serie temporale e win rate rolling ─────────────
+        st.subheader("Evoluzione nel tempo")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            df_all["pnl_cum"] = df_all["pnl"].cumsum()
+            fig_cum = px.line(df_all, x="executed_at", y="pnl_cum",
+                               title="P&L cumulato realizzato (€)",
+                               labels={"executed_at":"Data","pnl_cum":"P&L cumulato €"})
+            fig_cum.update_traces(line_color="#1976d2")
+            fig_cum.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+            st.plotly_chart(fig_cum, use_container_width=True)
+
+        with col2:
+            window = max(5, n // 5)
+            df_all["win_rolling"] = (df_all["pnl"] > 0).rolling(window).mean() * 100
+            fig_wr = px.line(df_all, x="executed_at", y="win_rolling",
+                              title=f"Win rate rolling (finestra {window} trade)",
+                              labels={"executed_at":"Data","win_rolling":"Win rate %"})
+            fig_wr.add_hline(y=50, line_dash="dash", line_color="gray", opacity=0.5)
+            fig_wr.update_traces(line_color="#ff6f00")
+            st.plotly_chart(fig_wr, use_container_width=True)
+
+        st.divider()
+
+        # ── SEZIONE 7: Serie consecutive ─────────────────────────────
+        st.subheader("Serie vincenti e perdenti consecutive")
+        outcomes = (df_all["pnl"] > 0).astype(int).tolist()
+        max_win_streak = max_loss_streak = cur_w = cur_l = 0
+        for o in outcomes:
+            if o == 1:
+                cur_w += 1; cur_l = 0
+            else:
+                cur_l += 1; cur_w = 0
+            max_win_streak  = max(max_win_streak, cur_w)
+            max_loss_streak = max(max_loss_streak, cur_l)
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Max serie vincente",  f"{max_win_streak} trade")
+        c2.metric("Max serie perdente",  f"{max_loss_streak} trade")
+        c3.metric("Trade vincenti",  f"{len(wins)} ({len(wins)/n*100:.1f}%)")
+        c4.metric("Trade perdenti", f"{len(losses)} ({len(losses)/n*100:.1f}%)")
+
+        # Heatmap esito per ticker
+        st.markdown("**P&L medio per ticker**")
+        by_ticker = df_all.groupby("ticker").agg(
+            n=("pnl","count"),
+            pnl_totale=("pnl","sum"),
+            pnl_medio=("pnl","mean"),
+            win_rate=("pnl", lambda x: round((x>0).mean()*100,1)),
+        ).reset_index().sort_values("pnl_totale", ascending=False)
+        def _col(v):
+            if pd.isna(v): return ""
+            return "color: #00c853" if v > 0 else "color: #d32f2f"
+        try:
+            st.dataframe(by_ticker.style.map(_col, subset=["pnl_totale","pnl_medio"]),
+                          use_container_width=True)
+        except Exception:
+            st.dataframe(by_ticker, use_container_width=True)
 
 # ============================================================
 # Pagina 5: Backtest
