@@ -71,44 +71,37 @@ def _ticker_market_open(ticker: str, open_sfx: set[str]) -> bool:
 
 
 def _get_watchlist(limit: int) -> list[dict]:
-    """Top titoli per il fast loop, filtrati per mercato aperto.
+    """Top titoli per il fast loop: puro trend following sull'universo completo.
 
-    Priorità 1: segnali recenti dal loop lento (score > 0, quality_ok).
-    Priorità 2: screener per rendimento 5-giorni (usato se segnali insufficienti).
+    Scansiona tutti i titoli disponibili ordinati per momentum recente
+    (rendimento 5 giorni + rendimento 1 giorno). Nessuna dipendenza dal
+    loop lento — il fast loop decide autonomamente in base al trend di prezzo.
     """
     open_sfx = _open_market_suffixes()
     log.info(f"Mercati aperti ora: {open_sfx or 'nessuno'}")
 
-    with connect() as c:
-        rows = c.execute("""
-            SELECT s.ticker, s.score
-            FROM signals s
-            INNER JOIN (
-                SELECT ticker, MAX(generated_at) AS mx
-                FROM signals GROUP BY ticker
-            ) latest ON s.ticker = latest.ticker AND s.generated_at = latest.mx
-            WHERE s.score > 0 AND s.quality_ok = 1 AND s.horizon = 'short_medium'
-            ORDER BY s.score DESC
-        """).fetchall()
+    if not open_sfx:
+        return []
 
-    # Filtra solo titoli con mercato aperto
-    result = [
-        {"ticker": r["ticker"], "score": float(r["score"])}
-        for r in rows
-        if _ticker_market_open(r["ticker"], open_sfx)
-    ][:limit]
+    # Screener su universo completo — prende più del necessario poi riordina
+    screened = screener_run(top_n=limit * 4)
 
-    # Se pochi segnali usa lo screener (solo mercati aperti)
-    if len(result) < limit // 2:
-        screened = screener_run(top_n=limit * 2)
-        seen = {r["ticker"] for r in result}
-        for s in screened:
-            if s.ticker not in seen and _ticker_market_open(s.ticker, open_sfx):
-                result.append({"ticker": s.ticker, "score": s.return_5d * 100})
-                if len(result) >= limit:
-                    break
+    candidates = []
+    for s in screened:
+        if not _ticker_market_open(s.ticker, open_sfx):
+            continue
+        if not s.cached:
+            continue
+        # Score composito: 70% trend 5gg + 30% slancio 1gg
+        score = (s.return_5d * 0.70 + s.return_1d * 0.30) * 100
+        candidates.append({"ticker": s.ticker, "score": score})
 
-    return result[:limit]
+    # Riordina per score composito (il più forte in cima)
+    candidates.sort(key=lambda x: x["score"], reverse=True)
+    result = candidates[:limit]
+
+    log.info(f"Watchlist trend following: {len(result)} titoli su mercati aperti")
+    return result
 
 
 def _get_fast_positions() -> dict[str, dict]:
