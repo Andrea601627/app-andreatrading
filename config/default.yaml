@@ -167,3 +167,12 @@ momentum:
   # Rotazione posizioni: sostituisce posizioni peggiori con opportunità migliori
   rotation_enabled: true
   # soglia minima = costo commissioni round-trip (calcolato dinamicamente per posizione)
+
+# ------------------------------------------------------------
+# Arbitraggio cross-listed (loop separato ogni 30s)
+# ------------------------------------------------------------
+arbitrage:
+  cycle_seconds: 30             # più veloce del fast loop (30s vs 60s)
+  min_spread_pct: 0.0035        # spread minimo 0.35% (copre commissioni A/R)
+  size_pct: 0.02                # 2% del capitale per ogni trade arb
+  max_positions: 6              # max posizioni arb aperte contemporaneamente

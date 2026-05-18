@@ -1,0 +1,77 @@
+# Coppie cross-listed per arbitraggio statistico
+# leg_a e leg_b sono lo stesso titolo su due borse diverse
+# currency: EUR = confronto diretto, altrimenti serve conversione FX
+
+pairs:
+  # ── Stessa valuta EUR (Paris ↔ Frankfurt) ─────────────────────────
+  - name: "Airbus"
+    leg_a: "AIR.PA"
+    leg_b: "AIR.DE"
+    currency_a: EUR
+    currency_b: EUR
+
+  - name: "TotalEnergies"
+    leg_a: "TTE.PA"
+    leg_b: "TTE.DE"
+    currency_a: EUR
+    currency_b: EUR
+
+  - name: "Sanofi"
+    leg_a: "SAN.PA"
+    leg_b: "SAN.DE"
+    currency_a: EUR
+    currency_b: EUR
+
+  - name: "BNP Paribas"
+    leg_a: "BNP.PA"
+    leg_b: "BNP.DE"
+    currency_a: EUR
+    currency_b: EUR
+
+  - name: "LVMH"
+    leg_a: "MC.PA"
+    leg_b: "MOH.DE"
+    currency_a: EUR
+    currency_b: EUR
+
+  - name: "Stellantis"
+    leg_a: "STLAM.MI"
+    leg_b: "STLAP.MI"
+    currency_a: EUR
+    currency_b: EUR
+
+  - name: "UniCredit"
+    leg_a: "UCG.MI"
+    leg_b: "CRIN.DE"
+    currency_a: EUR
+    currency_b: EUR
+
+  # ── GBP ↔ EUR ──────────────────────────────────────────────────────
+  - name: "Shell"
+    leg_a: "SHELL.AS"
+    leg_b: "SHEL.L"
+    currency_a: EUR
+    currency_b: GBP
+    fx_pair: "GBPEUR=X"
+
+  - name: "Unilever"
+    leg_a: "UNA.AS"
+    leg_b: "ULVR.L"
+    currency_a: EUR
+    currency_b: GBP
+    fx_pair: "GBPEUR=X"
+
+  # ── EUR ↔ USD (ADR) ────────────────────────────────────────────────
+  - name: "ASML"
+    leg_a: "ASML.AS"
+    leg_b: "ASML"
+    currency_a: EUR
+    currency_b: USD
+    fx_pair: "EURUSD=X"
+
+  - name: "SAP"
+    leg_a: "SAP.DE"
+    leg_b: "SAP"
+    currency_a: EUR
+    currency_b: USD
+    fx_pair: "EURUSD=X"
