@@ -164,7 +164,6 @@ momentum:
   commission_eur: 2.95
   min_net_gain_pct: 0.008         # guadagno netto minimo 0.8% — copre sempre le commissioni
 
-  # Rotazione posizioni: sostituisce posizioni deboli con opportunità più forti
+  # Rotazione posizioni: sostituisce posizioni peggiori con opportunità migliori
   rotation_enabled: true
-  rotation_min_loss_pct: 0.005    # ruota solo se la posizione perde almeno 0.5%
-  rotation_min_strength: 0.65     # solo segnali medi o forti (0.65 = medio, 1.0 = forte)
+  # soglia minima = costo commissioni round-trip (calcolato dinamicamente per posizione)

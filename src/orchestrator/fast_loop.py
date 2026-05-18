@@ -158,18 +158,15 @@ def _try_rotation(
     cfg_m: dict,
     total_equity: float,
 ) -> tuple[int, int]:
-    """Sostituisce posizioni perdenti con opportunità più forti dalla watchlist.
+    """Sostituisce posizioni peggiori con opportunità migliori dalla watchlist.
 
-    Vende la posizione con il P&L peggiore solo se:
-    - perde almeno rotation_min_loss_pct (copre commissioni + margine)
-    - il nuovo segnale ha strength >= rotation_min_strength
+    Ruota se la posizione peggiore è in perdita E la perdita supera il costo
+    delle commissioni di rotazione (unico freno: non perdere soldi in commissioni).
     Non cambia il numero totale di posizioni aperte (1 sell → 1 buy).
     """
     if not cfg_m.get("rotation_enabled", True) or not pending_signals:
         return 0, 0
 
-    min_loss = cfg_m.get("rotation_min_loss_pct", 0.005)
-    min_strength = cfg_m.get("rotation_min_strength", 0.65)
     commission_eur = cfg_m["commission_eur"]
 
     # Calcola P&L netto corrente per ogni posizione aperta
@@ -184,10 +181,16 @@ def _try_rotation(
         avg_price = float(pos["avg_price"])
         qty = int(pos["quantity"])
         notional = avg_price * qty
-        commission_pct = (2 * commission_eur / notional) if notional > 0 else 0
-        net_gain = (current_price - avg_price) / avg_price - commission_pct
-        pos_perf.append({"ticker": ticker, "net_gain": net_gain,
-                          "current_price": current_price, "quantity": qty})
+        # Soglia minima dinamica = costo round-trip commissioni sulla posizione
+        commission_pct = (2 * commission_eur / notional) if notional > 0 else 0.002
+        net_gain = (current_price - avg_price) / avg_price
+        pos_perf.append({
+            "ticker": ticker,
+            "net_gain": net_gain,
+            "commission_pct": commission_pct,
+            "current_price": current_price,
+            "quantity": qty,
+        })
 
     # Ordina: le posizioni più in perdita prima
     pos_perf.sort(key=lambda x: x["net_gain"])
@@ -199,12 +202,11 @@ def _try_rotation(
         if not pos_perf:
             break
         sig = sig_info["signal"]
-        if sig.strength < min_strength:
-            continue
 
         worst = pos_perf[0]
-        if worst["net_gain"] >= -min_loss:
-            # Nessuna posizione abbastanza in perdita da giustificare la rotazione
+        # Ruota solo se la perdita supera il costo delle commissioni di rotazione
+        # (evita di pagare più in commissioni di quanto si recupera)
+        if worst["net_gain"] >= -worst["commission_pct"]:
             break
 
         new_ticker = sig_info["ticker"]
