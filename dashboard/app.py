@@ -229,14 +229,31 @@ elif page == "Portafoglio":
     else:
         st.dataframe(pos, use_container_width=True)
 
-    st.subheader("Equity curve")
+    st.subheader("Rendimento in tempo reale")
     eq = _q("SELECT * FROM equity_curve ORDER BY timestamp")
     if not eq.empty:
         eq["timestamp"] = pd.to_datetime(eq["timestamp"])
-        fig = px.line(eq, x="timestamp", y="total_equity", title="Equity")
-        st.plotly_chart(fig, use_container_width=True)
+        initial = eq.iloc[0]["total_equity"]
+        eq["rendimento_eur"] = eq["total_equity"] - initial
+        eq["rendimento_pct"] = (eq["rendimento_eur"] / initial) * 100 if initial > 0 else 0
 
         last = eq.iloc[-1]
+        rend_eur = last["rendimento_eur"]
+        rend_pct = last["rendimento_pct"]
+
+        # Colore linea: verde se positivo, rosso se negativo
+        line_color = "#00c853" if rend_eur >= 0 else "#d32f2f"
+
+        fig = px.line(
+            eq, x="timestamp", y="rendimento_eur",
+            title=f"Rendimento: {'+' if rend_eur >= 0 else ''}{rend_eur:.2f} € ({'+' if rend_pct >= 0 else ''}{rend_pct:.2f}%)",
+            labels={"rendimento_eur": "Rendimento (€)", "timestamp": ""},
+        )
+        fig.update_traces(line_color=line_color, line_width=2)
+        fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+        fig.update_layout(yaxis_ticksuffix=" €")
+        st.plotly_chart(fig, use_container_width=True)
+
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Equity totale", f"{last['total_equity']:.2f} €")
         c2.metric("Cash", f"{last['cash']:.2f} €")
