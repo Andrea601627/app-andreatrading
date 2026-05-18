@@ -158,6 +158,109 @@ def _df_today_only(df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame()
 
 
+def _try_rotation(
+    pending_signals: list[dict],
+    data_map: dict,
+    broker,
+    cfg_m: dict,
+    total_equity: float,
+) -> tuple[int, int]:
+    """Sostituisce posizioni perdenti con opportunità più forti dalla watchlist.
+
+    Vende la posizione con il P&L peggiore solo se:
+    - perde almeno rotation_min_loss_pct (copre commissioni + margine)
+    - il nuovo segnale ha strength >= rotation_min_strength
+    Non cambia il numero totale di posizioni aperte (1 sell → 1 buy).
+    """
+    if not cfg_m.get("rotation_enabled", True) or not pending_signals:
+        return 0, 0
+
+    min_loss = cfg_m.get("rotation_min_loss_pct", 0.005)
+    min_strength = cfg_m.get("rotation_min_strength", 0.65)
+    commission_eur = cfg_m["commission_eur"]
+
+    # Calcola P&L netto corrente per ogni posizione aperta
+    current_positions = _get_fast_positions()
+    if not current_positions:
+        return 0, 0
+
+    pos_perf = []
+    for ticker, pos in current_positions.items():
+        df = data_map.get(ticker)
+        current_price = float(df["Close"].iloc[-1]) if (df is not None and not df.empty) else float(pos["avg_price"])
+        avg_price = float(pos["avg_price"])
+        qty = int(pos["quantity"])
+        notional = avg_price * qty
+        commission_pct = (2 * commission_eur / notional) if notional > 0 else 0
+        net_gain = (current_price - avg_price) / avg_price - commission_pct
+        pos_perf.append({"ticker": ticker, "net_gain": net_gain,
+                          "current_price": current_price, "quantity": qty})
+
+    # Ordina: le posizioni più in perdita prima
+    pos_perf.sort(key=lambda x: x["net_gain"])
+
+    sells = 0
+    buys = 0
+
+    for sig_info in pending_signals:
+        if not pos_perf:
+            break
+        sig = sig_info["signal"]
+        if sig.strength < min_strength:
+            continue
+
+        worst = pos_perf[0]
+        if worst["net_gain"] >= -min_loss:
+            # Nessuna posizione abbastanza in perdita da giustificare la rotazione
+            break
+
+        new_ticker = sig_info["ticker"]
+        new_price = sig_info["current_price"]
+
+        # Vendi la posizione debole
+        sell_result = broker.sell(worst["ticker"], worst["quantity"],
+                                   worst["current_price"], close_reason="rotation")
+        if not sell_result.success:
+            pos_perf.pop(0)
+            continue
+
+        log.info(f"ROTATION SELL {worst['ticker']} net={worst['net_gain']:.2%} "
+                 f"→ slot per {new_ticker} (strength={sig.strength:.2f})")
+        sells += 1
+        pos_perf.pop(0)
+
+        # Sizing del nuovo acquisto
+        slow_bonus = min(sig_info.get("slow_score", 0) / 100.0, 0.20)
+        effective_size = sig.size_pct * (1 + slow_bonus)
+        budget = total_equity * effective_size
+        qty = int(math.floor(budget / new_price))
+        qty = max(qty, _min_qty(new_price, commission_eur, cfg_m["min_net_gain_pct"]))
+
+        if qty * new_price > broker.cash():
+            log.info(f"Rotation: skip BUY {new_ticker} — cash insufficiente dopo vendita")
+            continue
+
+        buy_result = broker.buy(
+            new_ticker, qty, new_price,
+            horizon="fast",
+            score=round(sig.momentum_pct * 100, 2),
+            reason_json=json.dumps({
+                "momentum_pct": round(sig.momentum_pct, 5),
+                "strength": sig.strength,
+                "volume_confirmed": sig.volume_confirmed,
+                "slow_score": sig_info.get("slow_score", 0),
+                "rotation_from": worst["ticker"],
+                "rotation_replaced_gain": round(worst["net_gain"], 5),
+            }),
+        )
+        if buy_result.success:
+            log.info(f"ROTATION BUY {new_ticker} qty={qty} @ {new_price:.4f} | "
+                     f"momentum={sig.momentum_pct:.2%}")
+            buys += 1
+
+    return sells, buys
+
+
 def _min_qty(price: float, commission_eur: float, min_net_gain: float) -> int:
     """Quantità minima per coprire le commissioni e avere margine."""
     if price <= 0 or min_net_gain <= 0:
@@ -250,17 +353,16 @@ def run_fast_cycle() -> dict:
     log.info(f"Fast cycle: watchlist={len(watchlist)} titoli, posizioni_aperte={open_count}, "
              f"max_posizioni={cfg_m['max_fast_positions']}, cash={cash:.2f}")
 
+    pending_signals: list[dict] = []  # segnali forti in attesa per eventuale rotazione
+
     for w in watchlist:
         ticker = w["ticker"]
-        if open_count >= cfg_m["max_fast_positions"]:
-            log.info(f"Max posizioni raggiunto ({cfg_m['max_fast_positions']}), stop acquisti")
-            break
         if ticker in positions:
             continue
 
         df = data_map.get(ticker)
         if df is None or df.empty:
-            log.debug(f"{ticker}: nessun dato 1m disponibile")
+            log.debug(f"{ticker}: nessun dato disponibile")
             continue
 
         df_today = _df_today_only(df)
@@ -269,11 +371,21 @@ def run_fast_cycle() -> dict:
             log.info(f"{ticker}: momentum={sig.momentum_pct:.3%} vol_ok={sig.volume_confirmed} → {sig.direction}")
             continue
 
-        log.info(f"{ticker}: segnale BUY momentum={sig.momentum_pct:.3%} strength={sig.strength:.2f} volume_ok={sig.volume_confirmed}")
-
         current_price = float(df["Close"].iloc[-1])
         if current_price <= 0:
             continue
+
+        if open_count >= cfg_m["max_fast_positions"]:
+            # Limite raggiunto: raccoglie segnali forti come candidati rotazione
+            if sig.strength >= cfg_m.get("rotation_min_strength", 0.65):
+                pending_signals.append({
+                    "ticker": ticker, "signal": sig,
+                    "current_price": current_price,
+                    "slow_score": slow_scores.get(ticker, 0),
+                })
+            continue
+
+        log.info(f"{ticker}: segnale BUY momentum={sig.momentum_pct:.3%} strength={sig.strength:.2f} volume_ok={sig.volume_confirmed}")
 
         # Sizing: momentum strength + bonus da slow score
         slow_bonus = min(slow_scores.get(ticker, 0) / 100.0, 0.20)
@@ -305,6 +417,13 @@ def run_fast_cycle() -> dict:
             buys += 1
             open_count += 1
             cash -= qty * current_price
+
+    # 3. Rotazione: sostituisce posizioni deboli con opportunità più promettenti
+    if pending_signals:
+        log.info(f"Rotazione: {len(pending_signals)} candidati in attesa, verifico posizioni deboli")
+        rot_sells, rot_buys = _try_rotation(pending_signals, data_map, broker, cfg_m, total_equity)
+        sells += rot_sells
+        buys += rot_buys
 
     # Aggiorna equity curve ad ogni ciclo fast
     current_positions = _get_fast_positions()
