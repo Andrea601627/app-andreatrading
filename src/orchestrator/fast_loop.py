@@ -130,7 +130,10 @@ def _update_hwm(ticker: str, new_hwm: float) -> None:
 
 
 def _fetch_1m(ticker: str) -> tuple[str, pd.DataFrame | None]:
-    """Scarica candele 5-minuto (più affidabili di 1m su yfinance per mercati europei)."""
+    """Scarica candele 5-minuto. Restituisce tutti i dati recenti (2 giorni).
+    Il momentum userà solo le candele di oggi; per la valutazione posizioni
+    si usa l'ultima candela disponibile anche se di ieri (mercato chiuso).
+    """
     try:
         df = yf.download(ticker, period="2d", interval="5m",
                          auto_adjust=True, progress=False, threads=False)
@@ -139,15 +142,20 @@ def _fetch_1m(ticker: str) -> tuple[str, pd.DataFrame | None]:
         if df.empty:
             return ticker, None
         df.index = pd.to_datetime(df.index)
-        # Tieni solo le candele di oggi per evitare dati stantii
-        today = pd.Timestamp.now(tz="UTC").date()
-        df = df[df.index.date == today]
-        if df.empty:
-            return ticker, None
         return ticker, df
     except Exception as e:
         log.debug(f"5m fetch failed {ticker}: {e}")
         return ticker, None
+
+
+def _df_today_only(df: pd.DataFrame) -> pd.DataFrame:
+    """Filtra solo le candele di oggi (UTC) — usato per il momentum."""
+    today = pd.Timestamp.now(tz="UTC").date()
+    try:
+        idx = df.index.tz_convert("UTC") if df.index.tz else df.index.tz_localize("UTC")
+        return df[idx.date == today]
+    except Exception:
+        return df
 
 
 def _min_qty(price: float, commission_eur: float, min_net_gain: float) -> int:
@@ -249,7 +257,8 @@ def run_fast_cycle() -> dict:
             log.debug(f"{ticker}: nessun dato 1m disponibile")
             continue
 
-        sig = detect_momentum(ticker, df, cfg_m)
+        df_today = _df_today_only(df)
+        sig = detect_momentum(ticker, df_today, cfg_m)
         if sig.direction != "BUY":
             log.info(f"{ticker}: momentum={sig.momentum_pct:.3%} vol_ok={sig.volume_confirmed} → {sig.direction}")
             continue
