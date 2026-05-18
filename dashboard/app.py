@@ -13,8 +13,6 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from src.learning.journal import get_closed_trades, get_open_trades, get_recent_signals
-from src.learning.postmortem import error_class_summary
 from src.risk.drawdown_guard import is_blocked, resolve
 from src.utils.config import load_config
 from src.utils.db import connect, init_db
@@ -69,8 +67,8 @@ st.sidebar.title("AndreaTrading")
 st.sidebar.caption(f"Mode: **{cfg['mode'].upper()}**")
 page = st.sidebar.radio(
     "Sezione",
-    ["Azioni consigliate", "Rendimento Mercati", "Portafoglio", "Storico segnali",
-     "Trade chiusi & Learning", "Backtest", "Impostazioni"],
+    ["Azioni consigliate", "Rendimento Mercati", "Portafoglio", "Storico Trade",
+     "Storico segnali", "Backtest", "Impostazioni"],
 )
 
 if is_blocked():
@@ -277,7 +275,64 @@ elif page == "Portafoglio":
         c4.metric("Drawdown", f"{last['drawdown_pct']:.2%}")
 
 # ============================================================
-# Pagina 3: Storico segnali
+# Pagina 4: Storico Trade
+# ============================================================
+elif page == "Storico Trade":
+    st.title("Storico Trade")
+    st.caption("Ultimi 500 trade eseguiti dal sistema (acquisti e vendite)")
+
+    trades = _q("""
+        SELECT
+            executed_at        AS "Data/Ora",
+            ticker             AS "Ticker",
+            side               AS "Operazione",
+            quantity           AS "Quantità",
+            price              AS "Prezzo (€)",
+            commission         AS "Comm. (€)",
+            ROUND(quantity * price, 2) AS "Controvalore (€)",
+            pnl                AS "P&L (€)",
+            ROUND(pnl_pct * 100, 2)   AS "P&L (%)",
+            close_reason       AS "Motivo chiusura",
+            horizon            AS "Orizzonte"
+        FROM trades
+        ORDER BY executed_at DESC
+        LIMIT 500
+    """)
+
+    if trades.empty:
+        st.info("Nessun trade ancora eseguito.")
+    else:
+        # Metriche riepilogative
+        tot_trades = len(trades)
+        buys  = trades[trades["Operazione"] == "BUY"]
+        sells = trades[trades["Operazione"] == "SELL"]
+        pnl_tot = sells["P&L (€)"].sum() if not sells.empty else 0
+        win_rate = (sells["P&L (€)"] > 0).mean() * 100 if not sells.empty else 0
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Trade totali", tot_trades)
+        c2.metric("Acquisti", len(buys))
+        c3.metric("Vendite", len(sells))
+        c4.metric("P&L realizzato", f"{'+' if pnl_tot >= 0 else ''}{pnl_tot:.2f} €")
+
+        if not sells.empty:
+            c5, c6 = st.columns(2)
+            c5.metric("Win rate", f"{win_rate:.1f}%")
+            c6.metric("Trade vincenti", int((sells['P&L (€)'] > 0).sum()))
+
+        st.divider()
+
+        # Tabella con colori P&L
+        def _color_pnl(val):
+            if pd.isna(val) or val == 0:
+                return ""
+            return "color: #00c853" if val > 0 else "color: #d32f2f"
+
+        styled = trades.style.applymap(_color_pnl, subset=["P&L (€)", "P&L (%)"])
+        st.dataframe(styled, use_container_width=True, height=600)
+
+# ============================================================
+# Pagina 5: Storico segnali
 # ============================================================
 elif page == "Storico segnali":
     st.title("Storico segnali")
@@ -290,41 +345,6 @@ elif page == "Storico segnali":
                   "regime", "quality_ok"]],
             use_container_width=True,
         )
-
-# ============================================================
-# Pagina 4: Trade chiusi & Learning
-# ============================================================
-elif page == "Trade chiusi & Learning":
-    st.title("Trade chiusi & lezioni apprese")
-
-    closed = pd.DataFrame(get_closed_trades(500))
-    if closed.empty:
-        st.info("Nessun trade chiuso.")
-    else:
-        st.subheader("Trade chiusi")
-        st.dataframe(
-            closed[["closed_at", "ticker", "quantity", "price", "close_price",
-                     "pnl", "pnl_pct", "close_reason", "error_class"]],
-            use_container_width=True,
-        )
-
-        st.subheader("Classificazione errori")
-        summary = error_class_summary()
-        if summary:
-            df_sum = pd.DataFrame(
-                [(k, v) for k, v in summary.items()],
-                columns=["error_class", "count"],
-            )
-            fig = px.bar(df_sum, x="error_class", y="count",
-                          color="error_class", title="Distribuzione errori")
-            st.plotly_chart(fig, use_container_width=True)
-
-    st.subheader("Proposte di adattamento pesi")
-    le = _q("SELECT * FROM learning_events ORDER BY timestamp DESC LIMIT 50")
-    if le.empty:
-        st.write("Nessuna proposta di adattamento ancora.")
-    else:
-        st.dataframe(le, use_container_width=True)
 
 # ============================================================
 # Pagina 5: Backtest
