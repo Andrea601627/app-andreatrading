@@ -242,9 +242,15 @@ elif page == "Portafoglio":
         rend_eur = last["rendimento_eur"]
         rend_pct = (rend_eur / initial * 100) if initial > 0 else 0
 
-        # Asse Y centrato sullo zero
+        # Asse Y centrato sullo zero (simmetrico)
         max_abs = max(abs(eq["rendimento_eur"].max()), abs(eq["rendimento_eur"].min()), 1.0)
         y_range = [-max_abs * 1.3, max_abs * 1.3]
+
+        # Asse X: presente al centro — metà storia a sinistra, metà futuro a destra
+        now = pd.Timestamp.utcnow().tz_localize(None)
+        t_start = eq["timestamp"].min()
+        half_span = now - t_start          # durata della storia registrata
+        x_range = [t_start, now + half_span]   # presente al centro
 
         # Colore linea: verde se positivo, rosso se negativo
         line_color = "#00c853" if rend_eur >= 0 else "#d32f2f"
@@ -256,10 +262,12 @@ elif page == "Portafoglio":
         )
         fig.update_traces(line_color=line_color, line_width=2)
         fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+        # Linea verticale sul presente
+        fig.add_vline(x=now, line_dash="dot", line_color="white", opacity=0.3)
         fig.update_layout(
             yaxis_ticksuffix=" €",
             yaxis_range=y_range,
-            xaxis_range=[eq["timestamp"].min(), eq["timestamp"].max()],
+            xaxis_range=x_range,
         )
         st.plotly_chart(fig, use_container_width=True)
 
