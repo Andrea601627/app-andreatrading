@@ -140,11 +140,11 @@ storage:
 momentum:
   fast_cycle_seconds: 60          # ciclo ogni minuto
 
-  # Rilevamento trend (ultimi 5 minuti di candele 1-min)
-  lookback_minutes: 5
-  threshold_pct: 0.003            # 0.3% movimento minimo per segnale (abbassato da 0.4%)
-  strong_threshold_pct: 0.006     # 0.6% per segnale forte (abbassato da 0.7%)
-  volume_multiplier: 1.1          # volume corrente >= 1.1x media 20 periodi (abbassato da 1.3)
+  # Rilevamento trend (candele 5-minuto, lookback 3 candele = 15 min reali)
+  lookback_minutes: 3
+  threshold_pct: 0.003            # 0.3% movimento minimo su 15 min
+  strong_threshold_pct: 0.007     # 0.7% per segnale forte
+  volume_multiplier: 1.1          # volume corrente >= 1.1x media 20 periodi
 
   # Quanti titoli dalla watchlist del loop lento
   watchlist_size: 30

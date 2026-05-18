@@ -130,17 +130,23 @@ def _update_hwm(ticker: str, new_hwm: float) -> None:
 
 
 def _fetch_1m(ticker: str) -> tuple[str, pd.DataFrame | None]:
+    """Scarica candele 5-minuto (più affidabili di 1m su yfinance per mercati europei)."""
     try:
-        df = yf.download(ticker, period="1d", interval="1m",
+        df = yf.download(ticker, period="2d", interval="5m",
                          auto_adjust=True, progress=False, threads=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
         if df.empty:
             return ticker, None
         df.index = pd.to_datetime(df.index)
+        # Tieni solo le candele di oggi per evitare dati stantii
+        today = pd.Timestamp.now(tz="UTC").date()
+        df = df[df.index.date == today]
+        if df.empty:
+            return ticker, None
         return ticker, df
     except Exception as e:
-        log.debug(f"1m fetch failed {ticker}: {e}")
+        log.debug(f"5m fetch failed {ticker}: {e}")
         return ticker, None
 
 
@@ -174,7 +180,7 @@ def run_fast_cycle() -> dict:
 
     # Download candele 1-minuto in parallelo
     data_map: dict[str, pd.DataFrame | None] = {}
-    with ThreadPoolExecutor(max_workers=min(8, len(all_tickers))) as pool:
+    with ThreadPoolExecutor(max_workers=min(4, len(all_tickers))) as pool:
         futures = {pool.submit(_fetch_1m, t): t for t in all_tickers}
         for future in as_completed(futures):
             ticker, df = future.result()
