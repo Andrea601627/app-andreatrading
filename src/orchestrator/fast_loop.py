@@ -191,20 +191,28 @@ def run_fast_cycle() -> dict:
     open_count = len(_get_fast_positions())
     slow_scores = {w["ticker"]: w["score"] for w in watchlist}
 
+    log.info(f"Fast cycle: watchlist={len(watchlist)} titoli, posizioni_aperte={open_count}, "
+             f"max_posizioni={cfg_m['max_fast_positions']}, cash={cash:.2f}")
+
     for w in watchlist:
         ticker = w["ticker"]
         if open_count >= cfg_m["max_fast_positions"]:
+            log.info(f"Max posizioni raggiunto ({cfg_m['max_fast_positions']}), stop acquisti")
             break
         if ticker in positions:
             continue
 
         df = data_map.get(ticker)
         if df is None or df.empty:
+            log.debug(f"{ticker}: nessun dato 1m disponibile")
             continue
 
         sig = detect_momentum(ticker, df, cfg_m)
         if sig.direction != "BUY":
+            log.debug(f"{ticker}: momentum={sig.momentum_pct:.3%} strength={sig.strength:.2f} → {sig.direction}")
             continue
+
+        log.info(f"{ticker}: segnale BUY momentum={sig.momentum_pct:.3%} strength={sig.strength:.2f} volume_ok={sig.volume_confirmed}")
 
         current_price = float(df["Close"].iloc[-1])
         if current_price <= 0:
@@ -220,6 +228,7 @@ def run_fast_cycle() -> dict:
                                 cfg_m["min_net_gain_pct"]))
 
         if qty * current_price > cash:
+            log.info(f"{ticker}: skip — costo {qty * current_price:.2f} EUR > cash {cash:.2f} EUR")
             continue
 
         result = broker.buy(
