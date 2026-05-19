@@ -128,6 +128,17 @@ def _daily_loss_blacklist() -> set[str]:
     return {r["ticker"] for r in rows}
 
 
+def _calc_volatility(df: pd.DataFrame | None) -> float | None:
+    """Std dei rendimenti per candela — misura quanto oscilla il titolo.
+    Ritorna None se non ci sono abbastanza dati."""
+    if df is None or len(df) < 4:
+        return None
+    returns = df["Close"].pct_change().dropna()
+    if len(returns) < 3:
+        return None
+    return float(returns.std())
+
+
 def _update_hwm(ticker: str, new_hwm: float) -> None:
     with connect() as c:
         c.execute(
@@ -337,12 +348,14 @@ def run_fast_cycle() -> dict:
             hwm = current_price
             _update_hwm(ticker, hwm)
 
+        vol = _calc_volatility(_df_today_only(df) if df is not None else None)
         guard = profit_guard_check(
             buy_price=float(pos["avg_price"]),
             current_price=current_price,
             high_water_mark=float(hwm),
             quantity=int(pos["quantity"]),
             cfg_momentum=cfg_m,
+            volatility=vol,
         )
 
         if guard.should_sell:
@@ -350,7 +363,9 @@ def run_fast_cycle() -> dict:
                                  current_price, close_reason=guard.reason)
             if result.success:
                 log.info(f"FAST SELL {ticker} @ {current_price:.4f} | "
-                         f"reason={guard.reason} net={guard.net_gain_pct:.2%}")
+                         f"reason={guard.reason} net={guard.net_gain_pct:.2%} "
+                         f"trigger={guard.profit_trigger_used:.2%} vol={vol:.4f}" if vol else
+                         f"FAST SELL {ticker} @ {current_price:.4f} | reason={guard.reason} net={guard.net_gain_pct:.2%}")
                 sells += 1
 
     # 2. Nuovi acquisti dalla watchlist
