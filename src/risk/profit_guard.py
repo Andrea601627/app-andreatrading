@@ -78,6 +78,15 @@ def check(
     gain_at_hwm = (hwm - buy_price) / buy_price
     drop_from_hwm = (hwm - current_price) / hwm if hwm > 0 else 0
 
+    # Protezione breakeven: se la posizione era mai salita abbastanza da coprire
+    # le commissioni (>= 0.5%) e ora è tornata a zero o in perdita → vendi subito.
+    # Evita di trasformare un guadagno mancato in una perdita reale.
+    breakeven_trigger = max(commission_pct * 1.5, 0.005)  # almeno 0.5%
+    if gain_at_hwm >= breakeven_trigger and raw_gain <= commission_pct:
+        return GuardResult(should_sell=True, reason="breakeven_protection",
+                           net_gain_pct=net_gain, profit_trigger_used=breakeven_trigger)
+
+    # Profit lock trailing: gain ha raggiunto soglia e poi sceso dal picco
     if gain_at_hwm >= trigger and drop_from_hwm >= cfg_momentum["profit_trail_pct"]:
         return GuardResult(should_sell=True, reason="profit_lock",
                            net_gain_pct=net_gain, profit_trigger_used=trigger)
