@@ -118,13 +118,27 @@ learning:
 # ------------------------------------------------------------
 # Broker
 # ------------------------------------------------------------
+# Broker scelto: Interactive Brokers (IBKR) — piano Tiered
+#   Commissioni: 0.05% del controvalore, minimo €1.25 per ordine
+#   Vantaggi: API completa, tutti i mercati mondiali, regolamentato
+#
+# Per collegare l'account reale in futuro:
+#   1. Apri conto su interactivebrokers.com (minimo €2.000 raccomandato)
+#   2. Installa TWS o IB Gateway sul server: https://www.interactivebrokers.com/en/trading/tws.php
+#   3. In TWS: File → Global Config → API → Settings → abilita socket, porta 7496
+#   4. Modifica mode: live in questo file
+#   5. Il sistema si collegherà automaticamente via ib_insync
 broker:
   paper:
-    commission_per_trade_eur: 2.95  # simula commissioni IBKR Italia
+    commission_model: ibkr_tiered   # ibkr_tiered | fixed
+    commission_pct: 0.0005          # 0.05% del controvalore (IBKR Tiered)
+    commission_min_eur: 1.25        # minimo €1.25 per ordine
+    commission_max_pct: 0.01        # mai più dell'1% del controvalore
+    commission_per_trade_eur: 2.95  # usato solo se commission_model: fixed
     slippage_bps: 5                 # 0.05% di slippage simulato
   ibkr:
     host: 127.0.0.1
-    port: 7497                      # 7497 paper TWS, 7496 live TWS, 4002 IB Gateway paper
+    port: 7496                      # 7496 live TWS, 7497 paper TWS, 4002 IB Gateway live
     client_id: 1
 
 # ------------------------------------------------------------
@@ -160,9 +174,9 @@ momentum:
   profit_trail_pct: 0.004         # vendi se scende 0.4% dal picco
   hard_stop_pct: 0.015            # stop loss fisso a -1.5% — mai perdere più di questo
 
-  # Commissioni IBKR
-  commission_eur: 2.95
-  min_net_gain_pct: 0.008         # guadagno netto minimo 0.8% — copre sempre le commissioni
+  # Commissioni IBKR Tiered (minimo per calcoli interni)
+  commission_eur: 1.25
+  min_net_gain_pct: 0.006         # guadagno netto minimo 0.6% — copre commissioni tiered
 
   # Rotazione posizioni: sostituisce posizioni peggiori con opportunità migliori
   rotation_enabled: true

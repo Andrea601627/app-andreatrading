@@ -418,7 +418,7 @@ elif page == "Storico segnali":
 # ============================================================
 elif page == "Statistiche Avanzate":
     st.title("Statistiche Avanzate")
-    st.caption("Analisi statistica completa del comportamento del sistema di trading")
+    st.caption("Report completo sul comportamento del sistema — ogni sezione include una descrizione e un'analisi contestuale sui dati reali.")
 
     # Carica tutti i trade chiusi
     df_all = _q("""
@@ -447,11 +447,19 @@ elif page == "Statistiche Avanzate":
         n = len(df_all)
 
         # ── SEZIONE 1: KPI Riepilogo ─────────────────────────────────
-        st.subheader("Riepilogo generale")
+        st.subheader("1 — Panoramica generale")
+        st.caption(
+            "**Win rate**: % di trade chiusi in guadagno. "
+            "**Profit factor**: rapporto tra guadagni lordi e perdite lorde — sopra 1 il sistema è profittevole. "
+            "**Sharpe ratio**: rendimento aggiustato per il rischio (>1 buono, >2 eccellente). "
+            "**Sortino**: come Sharpe ma penalizza solo la volatilità negativa."
+        )
         c1,c2,c3,c4,c5,c6 = st.columns(6)
         c1.metric("Trade totali", n)
-        c2.metric("Win rate", f"{len(wins)/n*100:.1f}%")
-        c3.metric("P&L totale", f"{df_all['pnl'].sum():.2f} €")
+        win_rate_pct = len(wins)/n*100
+        c2.metric("Win rate", f"{win_rate_pct:.1f}%")
+        pnl_totale = df_all['pnl'].sum()
+        c3.metric("P&L totale", f"{pnl_totale:.2f} €")
         avg_win  = wins["pnl"].mean()  if not wins.empty  else 0
         avg_loss = losses["pnl"].mean() if not losses.empty else 0
         profit_factor = abs(wins["pnl"].sum() / losses["pnl"].sum()) if not losses.empty and losses["pnl"].sum() != 0 else float("inf")
@@ -464,21 +472,50 @@ elif page == "Statistiche Avanzate":
         worst = df_all.loc[df_all["pnl"].idxmin()]
         c7.metric("Trade migliore",  f"{best['pnl']:.2f} € ({best['ticker']})")
         c8.metric("Trade peggiore",  f"{worst['pnl']:.2f} € ({worst['ticker']})")
-        # Sharpe ratio (approssimato su serie P&L %)
         if df_all["pnl_pct"].std() > 0:
             sharpe = (df_all["pnl_pct"].mean() / df_all["pnl_pct"].std()) * (252 ** 0.5)
         else:
             sharpe = 0.0
-        # Sortino (solo deviazione downside)
         downside = df_all[df_all["pnl_pct"] < 0]["pnl_pct"]
         sortino = (df_all["pnl_pct"].mean() / downside.std() * (252**0.5)) if len(downside) > 1 and downside.std() > 0 else 0.0
         c9.metric("Sharpe ratio",  f"{sharpe:.2f}")
         c10.metric("Sortino ratio", f"{sortino:.2f}")
 
+        # Report contestuale sezione 1
+        rep1 = []
+        if win_rate_pct >= 60:
+            rep1.append(f"✅ Win rate {win_rate_pct:.1f}%: eccellente. Il sistema vince su più di 6 trade su 10.")
+        elif win_rate_pct >= 45:
+            rep1.append(f"🟡 Win rate {win_rate_pct:.1f}%: accettabile. Servono guadagni medi superiori alle perdite per essere profittevole.")
+        else:
+            rep1.append(f"🔴 Win rate {win_rate_pct:.1f}%: basso. Il sistema perde su più della metà dei trade — verificare i parametri di ingresso.")
+        if profit_factor == float("inf") or profit_factor > 2:
+            rep1.append("✅ Profit factor eccellente: i guadagni superano largamente le perdite.")
+        elif profit_factor >= 1.2:
+            rep1.append(f"🟡 Profit factor {profit_factor:.2f}: positivo ma con margine limitato.")
+        elif profit_factor >= 1.0:
+            rep1.append(f"⚠️ Profit factor {profit_factor:.2f}: appena sopra il break-even. Le commissioni potrebbero erodere il vantaggio.")
+        else:
+            rep1.append(f"🔴 Profit factor {profit_factor:.2f}: il sistema sta perdendo denaro complessivamente.")
+        if sharpe > 1:
+            rep1.append(f"✅ Sharpe {sharpe:.2f}: buon rendimento aggiustato per il rischio.")
+        elif sharpe > 0:
+            rep1.append(f"🟡 Sharpe {sharpe:.2f}: rendimento positivo ma volatile.")
+        else:
+            rep1.append(f"🔴 Sharpe {sharpe:.2f}: rendimento negativo rispetto al rischio assunto.")
+        if n < 30:
+            rep1.append(f"ℹ️ Con soli {n} trade il campione è ancora piccolo — le statistiche diventeranno più affidabili dopo 50+ trade.")
+        st.info("  \n".join(rep1))
+
         st.divider()
 
         # ── SEZIONE 2: Tempi di detenzione ───────────────────────────
-        st.subheader("Analisi tempi di detenzione (holding time)")
+        st.subheader("2 — Tempi di detenzione (holding time)")
+        st.caption(
+            "Quanto a lungo il sistema tiene aperta una posizione prima di chiuderla. "
+            "Tempi brevi (<10 min) indicano uno stile scalping, tempi medi (10-60 min) momentum intraday. "
+            "Confrontare la durata media dei trade vincenti vs perdenti rivela se il sistema taglia le perdite velocemente."
+        )
 
         if not df_buys.empty:
             df_buys["executed_at"] = pd.to_datetime(df_buys["executed_at"])
@@ -530,13 +567,35 @@ elif page == "Statistiche Avanzate":
                 labels={"holding_min": "Minuti"},
             )
             st.plotly_chart(fig_hist_t, use_container_width=True)
+
+            # Report contestuale sezione 2
+            win_hold = df_buys_ext[df_buys_ext["esito"]=="Vincente"]["holding_min"]
+            loss_hold = df_buys_ext[df_buys_ext["esito"]=="Perdente"]["holding_min"]
+            rep2 = []
+            rep2.append(f"📊 Durata media complessiva: **{media:.0f} min** ({media/60:.1f}h).")
+            if not win_hold.empty and not loss_hold.empty:
+                if win_hold.mean() > loss_hold.mean():
+                    rep2.append(f"✅ I trade vincenti durano più a lungo ({win_hold.mean():.0f} min) dei perdenti ({loss_hold.mean():.0f} min): il sistema lascia correre i guadagni.")
+                else:
+                    rep2.append(f"⚠️ I trade perdenti durano più a lungo ({loss_hold.mean():.0f} min) dei vincenti ({win_hold.mean():.0f} min): il sistema tarda a tagliare le perdite.")
+            if media < 5:
+                rep2.append("ℹ️ Stile scalping puro: posizioni molto brevi. Le commissioni incidono molto — verificare il profit factor.")
+            elif media < 30:
+                rep2.append("ℹ️ Stile momentum intraday: coerente con la strategia fast loop.")
+            st.info("  \n".join(rep2))
         else:
             st.info("Dati holding time non ancora disponibili.")
 
         st.divider()
 
         # ── SEZIONE 3: Distribuzione P&L ─────────────────────────────
-        st.subheader("Distribuzione P&L e valori anomali")
+        st.subheader("3 — Distribuzione P&L e valori anomali")
+        st.caption(
+            "Mostra come si distribuiscono i risultati dei trade. "
+            "Una distribuzione spostata a destra (coda destra più lunga) è positiva: poche grandi vincite. "
+            "La curva arancione è la distribuzione normale teorica — scostamenti indicano comportamenti non casuali. "
+            "I valori anomali (Z-score >2) sono trade con risultati eccezionalmente buoni o cattivi."
+        )
 
         col1, col2 = st.columns(2)
         with col1:
@@ -583,11 +642,26 @@ elif page == "Statistiche Avanzate":
             desc.index = ["Conteggio","Media","Dev. std","Min","10°%","25°%","50°%","75°%","90°%","Max"]
             st.dataframe(desc.round(3).to_frame("Valore"), use_container_width=True)
 
+        # Report sezione 3
+        skewness = float(df_all["pnl_pct"].skew())
+        rep3 = []
+        if skewness > 0.3:
+            rep3.append(f"✅ Distribuzione con asimmetria positiva ({skewness:.2f}): il sistema produce occasionalmente grandi vincite — buon segno.")
+        elif skewness < -0.3:
+            rep3.append(f"⚠️ Distribuzione con asimmetria negativa ({skewness:.2f}): il sistema produce occasionalmente grandi perdite. Verificare gli stop loss.")
+        else:
+            rep3.append(f"🟡 Distribuzione simmetrica (skewness {skewness:.2f}): nessuna tendenza verso grandi vincite o grandi perdite.")
+        st.info("  \n".join(rep3))
+
         st.divider()
 
         # ── SEZIONE 4: Regressione lineare ───────────────────────────
-        st.subheader("Analisi di regressione: score di ingresso → P&L")
-        st.caption("Studia se esiste una relazione tra la forza del segnale al momento dell'acquisto e il profitto ottenuto")
+        st.subheader("4 — Qualità del segnale: score → P&L")
+        st.caption(
+            "Verifica se esiste una relazione statistica tra la forza del segnale al momento dell'acquisto e il risultato finale. "
+            "R² indica quanto lo score 'spiega' il P&L (0=nessuna relazione, 1=relazione perfetta). "
+            "p-value < 0.05 significa che la relazione è statisticamente significativa e non casuale."
+        )
 
         df_reg = df_all[df_all["score"].notna() & df_all["pnl_pct"].notna()].copy()
         df_reg["score"] = pd.to_numeric(df_reg["score"], errors="coerce")
@@ -664,7 +738,11 @@ elif page == "Statistiche Avanzate":
         st.divider()
 
         # ── SEZIONE 5: P&L per ora del giorno e motivo chiusura ──────
-        st.subheader("Quando e perché il sistema guadagna o perde")
+        st.subheader("5 — Quando e perché il sistema guadagna o perde")
+        st.caption(
+            "**Per ora**: identifica le fasce orarie più profittevoli. L'apertura (9-10) e la chiusura (16-17) dei mercati sono tipicamente le più volatili. "
+            "**Per motivo**: mostra se il sistema chiude per segnale, stop loss, profit lock o trailing stop — e quale strategia di uscita rende di più."
+        )
         col1, col2 = st.columns(2)
 
         with col1:
@@ -697,10 +775,25 @@ elif page == "Statistiche Avanzate":
                            text="n")
             st.plotly_chart(fig_r, use_container_width=True)
 
+        # Report sezione 5
+        if not by_reason.empty:
+            best_reason = by_reason.iloc[0]
+            worst_reason = by_reason.iloc[-1]
+            rep5 = [f"📊 Motivo di chiusura più profittevole: **{best_reason['close_reason']}** (P&L medio {best_reason['pnl_medio']:.2f}€)."]
+            if "stop_loss" in by_reason["close_reason"].values:
+                sl_row = by_reason[by_reason["close_reason"]=="stop_loss"].iloc[0]
+                rep5.append(f"🛑 Stop loss attivato {int(sl_row['n'])} volte con perdita media {sl_row['pnl_medio']:.2f}€.")
+            st.info("  \n".join(rep5))
+
         st.divider()
 
         # ── SEZIONE 6: Serie temporale e win rate rolling ─────────────
-        st.subheader("Evoluzione nel tempo")
+        st.subheader("6 — Evoluzione nel tempo")
+        st.caption(
+            "Il P&L cumulato mostra la traiettoria complessiva del sistema. "
+            "Il win rate rolling (finestra mobile) indica se il sistema sta migliorando o peggiorando nel tempo — "
+            "una linea che sale verso 50%+ è un segnale positivo di apprendimento."
+        )
         col1, col2 = st.columns(2)
 
         with col1:
@@ -725,7 +818,12 @@ elif page == "Statistiche Avanzate":
         st.divider()
 
         # ── SEZIONE 7: Serie consecutive ─────────────────────────────
-        st.subheader("Serie vincenti e perdenti consecutive")
+        st.subheader("7 — Serie consecutive e performance per ticker")
+        st.caption(
+            "Le serie consecutive rivelano se il sistema tende a 'raggruppare' vincite e perdite — "
+            "serie perdenti lunghe possono indicare problemi con le condizioni di mercato correnti. "
+            "La tabella per ticker mostra su quali asset il sistema performa meglio storicamente."
+        )
         outcomes = (df_all["pnl"] > 0).astype(int).tolist()
         max_win_streak = max_loss_streak = cur_w = cur_l = 0
         for o in outcomes:
@@ -759,10 +857,24 @@ elif page == "Statistiche Avanzate":
         except Exception:
             st.dataframe(by_ticker, use_container_width=True)
 
+        # Report sezione 7
+        rep7 = [f"📊 Serie vincente massima: **{max_win_streak}** trade consecutivi. Serie perdente massima: **{max_loss_streak}** trade consecutivi."]
+        if max_loss_streak >= 5:
+            rep7.append(f"⚠️ Serie perdente di {max_loss_streak}: in quel periodo il sistema era in difficoltà. Controllare se coincide con condizioni di mercato particolari.")
+        if not by_ticker.empty:
+            top_t = by_ticker.iloc[0]
+            rep7.append(f"🏆 Ticker più profittevole: **{top_t['ticker']}** con P&L totale {top_t['pnl_totale']:.2f}€ su {int(top_t['n'])} trade.")
+        st.info("  \n".join(rep7))
+
         st.divider()
 
         # ── SEZIONE 8: Analisi per mercato ───────────────────────────
-        st.subheader("Come il software si muove tra i mercati")
+        st.subheader("8 — Distribuzione tra i mercati")
+        st.caption(
+            "Mostra come il sistema distribuisce i trade tra le varie borse mondiali. "
+            "Un sistema ben diversificato non dovrebbe concentrarsi su un solo mercato. "
+            "Il win rate per mercato rivela dove la strategia momentum funziona meglio."
+        )
 
         _SUFFIX_TO_MARKET = {
             ".MI": "Italia (MIL)", ".PA": "Francia (EPA)", ".DE": "Germania (XETRA)",
@@ -838,10 +950,28 @@ elif page == "Statistiche Avanzate":
         except Exception:
             st.dataframe(by_mkt, use_container_width=True)
 
+        # Report sezione 8
+        if not by_mkt.empty:
+            rep8 = []
+            top_mkt = by_mkt.sort_values("pnl_totale", ascending=False).iloc[0]
+            dominant = by_mkt.sort_values("n_trade", ascending=False).iloc[0]
+            rep8.append(f"📊 Mercato più attivo: **{dominant['mercato']}** con {int(dominant['n_trade'])} trade ({dominant['n_trade']/n*100:.0f}% del totale).")
+            rep8.append(f"💰 Mercato più profittevole: **{top_mkt['mercato']}** con P&L totale {top_mkt['pnl_totale']:.2f}€.")
+            if dominant["mercato"] != top_mkt["mercato"]:
+                rep8.append("🟡 Il mercato più attivo non è il più profittevole — valutare se ridurre l'esposizione su mercati meno redditizi.")
+            best_wr_mkt = by_mkt.sort_values("win_rate", ascending=False).iloc[0]
+            rep8.append(f"🎯 Miglior win rate: **{best_wr_mkt['mercato']}** con {best_wr_mkt['win_rate']:.1f}%.")
+            st.info("  \n".join(rep8))
+
         st.divider()
 
         # ── SEZIONE 9: Performance per giorno della settimana ────────
-        st.subheader("Quale giorno rende di più")
+        st.subheader("9 — Performance per giorno della settimana")
+        st.caption(
+            "Identifica i giorni in cui il sistema performa meglio. "
+            "Lunedì e Venerdì tendono ad avere più volatilità (apertura/chiusura settimanale). "
+            "Il numero di trade per giorno indica anche quando il sistema è più attivo."
+        )
 
         _GIORNI = {0: "Lunedì", 1: "Martedì", 2: "Mercoledì",
                    3: "Giovedì", 4: "Venerdì", 5: "Sabato", 6: "Domenica"}
@@ -879,10 +1009,24 @@ elif page == "Statistiche Avanzate":
             fig_day_wr.add_hline(y=50, line_dash="dash", line_color="gray", opacity=0.5)
             st.plotly_chart(fig_day_wr, use_container_width=True)
 
+        # Report sezione 9
+        if not by_day.empty:
+            rep9 = []
+            best_day = by_day.sort_values("pnl_medio", ascending=False).iloc[0]
+            worst_day = by_day.sort_values("pnl_medio").iloc[0]
+            rep9.append(f"📅 Giorno migliore: **{best_day['giorno']}** (P&L medio {best_day['pnl_medio']:.2f}€, win rate {best_day['win_rate']:.0f}%).")
+            rep9.append(f"📅 Giorno peggiore: **{worst_day['giorno']}** (P&L medio {worst_day['pnl_medio']:.2f}€, win rate {worst_day['win_rate']:.0f}%).")
+            st.info("  \n".join(rep9))
+
         st.divider()
 
         # ── SEZIONE 10: Blacklist giornaliera attiva ─────────────────
-        st.subheader("Blacklist giornaliera (ticker bloccati oggi)")
+        st.subheader("10 — Blacklist giornaliera (ticker bloccati oggi)")
+        st.caption(
+            "Ticker che il sistema ha già tradato in perdita 2 volte oggi. "
+            "La regola di blacklist evita di insistere su asset che non stanno funzionando nella sessione corrente. "
+            "La lista si azzera automaticamente a mezzanotte."
+        )
         st.caption("Ticker con 2+ trade in perdita oggi — il fast loop non li riaprirà fino a domani")
 
         df_bl = _q("""

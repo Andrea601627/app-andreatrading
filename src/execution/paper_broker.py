@@ -15,10 +15,19 @@ def _now() -> str:
 class PaperBroker(Broker):
     def __init__(self) -> None:
         cfg = load_config()
-        self.commission = cfg["broker"]["paper"]["commission_per_trade_eur"]
-        self.slippage_bps = cfg["broker"]["paper"]["slippage_bps"]
+        self._cfg_broker = cfg["broker"]["paper"]
+        self.slippage_bps = self._cfg_broker["slippage_bps"]
         self._initial = cfg["capital"]["initial"]
         self._ensure_seeded()
+
+    def _calc_commission(self, notional: float) -> float:
+        model = self._cfg_broker.get("commission_model", "fixed")
+        if model == "ibkr_tiered":
+            pct = self._cfg_broker.get("commission_pct", 0.0005)
+            min_eur = self._cfg_broker.get("commission_min_eur", 1.25)
+            max_pct = self._cfg_broker.get("commission_max_pct", 0.01)
+            return min(max(notional * pct, min_eur), notional * max_pct)
+        return self._cfg_broker.get("commission_per_trade_eur", 2.95)
 
     def _ensure_seeded(self) -> None:
         with connect() as c:
@@ -63,9 +72,10 @@ class PaperBroker(Broker):
         if quantity <= 0:
             return OrderResult(False, ticker, "BUY", 0, 0, 0, _now(), "qty<=0")
         fill = self._apply_slippage(ref_price, "BUY")
-        cost = fill * quantity + self.commission
+        commission = self._calc_commission(fill * quantity)
+        cost = fill * quantity + commission
         if cost > self.cash():
-            return OrderResult(False, ticker, "BUY", quantity, fill, self.commission,
+            return OrderResult(False, ticker, "BUY", quantity, fill, commission,
                                 _now(), "insufficient_cash")
 
         ts = datetime.now(timezone.utc)
@@ -75,7 +85,7 @@ class PaperBroker(Broker):
                                      horizon, score, reason_json, market_regime,
                                      executed_at)
                 VALUES (?, 'BUY', ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (ticker, quantity, fill, self.commission,
+            """, (ticker, quantity, fill, commission,
                   horizon, score, reason_json, market_regime, ts))
             trade_id = cur.lastrowid
 
@@ -101,7 +111,7 @@ class PaperBroker(Broker):
                 """, (ticker, quantity, fill, horizon, ts, stop_loss, take_profit,
                       fill, trade_id))
 
-        return OrderResult(True, ticker, "BUY", quantity, fill, self.commission,
+        return OrderResult(True, ticker, "BUY", quantity, fill, commission,
                             _now(), "filled")
 
     def sell(self, ticker: str, quantity: int, ref_price: float,
@@ -118,8 +128,9 @@ class PaperBroker(Broker):
                                     "insufficient_position")
 
             fill = self._apply_slippage(ref_price, "SELL")
+            commission = self._calc_commission(fill * quantity)
             ts = datetime.now(timezone.utc)
-            pnl = (fill - pos["avg_price"]) * quantity - self.commission
+            pnl = (fill - pos["avg_price"]) * quantity - commission
             pnl_pct = ((fill / pos["avg_price"]) - 1) if pos["avg_price"] else 0
 
             c.execute("""
@@ -127,7 +138,7 @@ class PaperBroker(Broker):
                                      horizon, executed_at, closed_at, close_price,
                                      pnl, pnl_pct, close_reason)
                 VALUES (?, 'SELL', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (ticker, quantity, fill, self.commission, pos["horizon"],
+            """, (ticker, quantity, fill, commission, pos["horizon"],
                   ts, ts, fill, pnl, pnl_pct, close_reason))
 
             # marca anche il BUY originale come chiuso
@@ -145,5 +156,5 @@ class PaperBroker(Broker):
                 c.execute("UPDATE positions SET quantity=? WHERE ticker=?",
                           (new_qty, ticker))
 
-        return OrderResult(True, ticker, "SELL", quantity, fill, self.commission,
+        return OrderResult(True, ticker, "SELL", quantity, fill, commission,
                             _now(), f"filled pnl={pnl:.2f}")
