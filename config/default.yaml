@@ -10,7 +10,7 @@ timezone: Europe/Rome
 # Capitale e allocazione
 # ------------------------------------------------------------
 capital:
-  initial: 100000.0    # capitale di partenza in EUR (paper)
+  initial: 1000.0      # capitale di partenza in EUR (paper)
   # Allocazione per orizzonte temporale
   allocation:
     short_medium: 0.80   # 80% breve/medio termine

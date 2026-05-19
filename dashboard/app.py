@@ -759,6 +759,148 @@ elif page == "Statistiche Avanzate":
         except Exception:
             st.dataframe(by_ticker, use_container_width=True)
 
+        st.divider()
+
+        # ── SEZIONE 8: Analisi per mercato ───────────────────────────
+        st.subheader("Come il software si muove tra i mercati")
+
+        _SUFFIX_TO_MARKET = {
+            ".MI": "Italia (MIL)", ".PA": "Francia (EPA)", ".DE": "Germania (XETRA)",
+            ".L": "UK (LSE)", ".AS": "Olanda (AMS)", ".BR": "Belgio (EBR)",
+            ".MC": "Spagna (BME)", ".T": "Giappone (TSE)", ".HK": "Hong Kong (HKEX)",
+        }
+        def _ticker_to_market(t: str) -> str:
+            t_up = t.upper()
+            for sfx, name in _SUFFIX_TO_MARKET.items():
+                if t_up.endswith(sfx.upper()):
+                    return name
+            return "USA (NYSE/NASDAQ)"
+
+        df_all["mercato"] = df_all["ticker"].apply(_ticker_to_market)
+
+        by_mkt = df_all.groupby("mercato").agg(
+            n_trade=("pnl", "count"),
+            pnl_totale=("pnl", "sum"),
+            pnl_medio=("pnl", "mean"),
+            win_rate=("pnl", lambda x: round((x > 0).mean() * 100, 1)),
+        ).reset_index().sort_values("n_trade", ascending=False)
+        by_mkt["pnl_totale"] = by_mkt["pnl_totale"].round(2)
+        by_mkt["pnl_medio"] = by_mkt["pnl_medio"].round(2)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            fig_mkt_n = px.bar(
+                by_mkt, x="mercato", y="n_trade",
+                title="Trade per mercato",
+                labels={"n_trade": "N° trade", "mercato": ""},
+                color="n_trade", color_continuous_scale="Blues",
+            )
+            fig_mkt_n.update_layout(showlegend=False)
+            st.plotly_chart(fig_mkt_n, use_container_width=True)
+
+        with col2:
+            fig_mkt_pnl = px.bar(
+                by_mkt, x="mercato", y="pnl_totale",
+                title="P&L totale per mercato (€)",
+                labels={"pnl_totale": "P&L €", "mercato": ""},
+                color="pnl_totale",
+                color_continuous_scale=["#d32f2f", "#888", "#00c853"],
+                color_continuous_midpoint=0,
+            )
+            st.plotly_chart(fig_mkt_pnl, use_container_width=True)
+
+        col3, col4 = st.columns(2)
+        with col3:
+            fig_mkt_wr = px.bar(
+                by_mkt, x="mercato", y="win_rate",
+                title="Win rate per mercato (%)",
+                labels={"win_rate": "Win rate %", "mercato": ""},
+                color="win_rate",
+                color_continuous_scale=["#d32f2f", "#888", "#00c853"],
+                color_continuous_midpoint=50,
+            )
+            fig_mkt_wr.add_hline(y=50, line_dash="dash", line_color="gray", opacity=0.5)
+            st.plotly_chart(fig_mkt_wr, use_container_width=True)
+
+        with col4:
+            fig_pie = px.pie(
+                by_mkt, names="mercato", values="n_trade",
+                title="Distribuzione trade per mercato",
+            )
+            fig_pie.update_traces(textposition="inside", textinfo="percent+label")
+            st.plotly_chart(fig_pie, use_container_width=True)
+
+        try:
+            st.dataframe(
+                by_mkt.style.map(_col, subset=["pnl_totale", "pnl_medio"]),
+                use_container_width=True,
+            )
+        except Exception:
+            st.dataframe(by_mkt, use_container_width=True)
+
+        st.divider()
+
+        # ── SEZIONE 9: Performance per giorno della settimana ────────
+        st.subheader("Quale giorno rende di più")
+
+        _GIORNI = {0: "Lunedì", 1: "Martedì", 2: "Mercoledì",
+                   3: "Giovedì", 4: "Venerdì", 5: "Sabato", 6: "Domenica"}
+        df_all["giorno_n"] = df_all["executed_at"].dt.weekday
+        df_all["giorno"] = df_all["giorno_n"].map(_GIORNI)
+        by_day = df_all.groupby(["giorno_n","giorno"]).agg(
+            n_trade=("pnl","count"),
+            pnl_medio=("pnl","mean"),
+            win_rate=("pnl", lambda x: round((x>0).mean()*100,1)),
+        ).reset_index().sort_values("giorno_n")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            fig_day = px.bar(
+                by_day, x="giorno", y="pnl_medio",
+                title="P&L medio per giorno della settimana",
+                labels={"pnl_medio": "P&L medio €", "giorno": ""},
+                color="pnl_medio",
+                color_continuous_scale=["#d32f2f", "#888", "#00c853"],
+                color_continuous_midpoint=0,
+                text=by_day["n_trade"].apply(lambda x: f"{x} tr"),
+            )
+            fig_day.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+            st.plotly_chart(fig_day, use_container_width=True)
+
+        with col2:
+            fig_day_wr = px.bar(
+                by_day, x="giorno", y="win_rate",
+                title="Win rate per giorno (%)",
+                labels={"win_rate": "Win rate %", "giorno": ""},
+                color="win_rate",
+                color_continuous_scale=["#d32f2f", "#888", "#00c853"],
+                color_continuous_midpoint=50,
+            )
+            fig_day_wr.add_hline(y=50, line_dash="dash", line_color="gray", opacity=0.5)
+            st.plotly_chart(fig_day_wr, use_container_width=True)
+
+        st.divider()
+
+        # ── SEZIONE 10: Blacklist giornaliera attiva ─────────────────
+        st.subheader("Blacklist giornaliera (ticker bloccati oggi)")
+        st.caption("Ticker con 2+ trade in perdita oggi — il fast loop non li riaprirà fino a domani")
+
+        df_bl = _q("""
+            SELECT ticker, COUNT(*) AS perdite_oggi,
+                   ROUND(SUM(pnl), 2) AS pnl_totale_oggi
+            FROM trades
+            WHERE side='SELL' AND pnl < 0 AND horizon='fast'
+              AND date(closed_at) = date('now', 'localtime')
+            GROUP BY ticker
+            HAVING perdite_oggi >= 2
+            ORDER BY pnl_totale_oggi
+        """)
+        if df_bl.empty:
+            st.success("Nessun ticker in blacklist oggi.")
+        else:
+            st.warning(f"{len(df_bl)} ticker bloccati oggi per 2+ perdite consecutive")
+            st.dataframe(df_bl, use_container_width=True)
+
 # ============================================================
 # Pagina 5: Backtest
 # ============================================================

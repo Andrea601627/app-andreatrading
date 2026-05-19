@@ -114,6 +114,20 @@ def _get_fast_positions() -> dict[str, dict]:
     return {r["ticker"]: dict(r) for r in rows}
 
 
+def _daily_loss_blacklist() -> set[str]:
+    """Ticker con >= 2 trade in perdita oggi (fast) — da non riaprire per oggi."""
+    with connect() as c:
+        rows = c.execute("""
+            SELECT ticker, COUNT(*) AS n
+            FROM trades
+            WHERE side='SELL' AND pnl < 0 AND horizon='fast'
+              AND date(closed_at) = date('now', 'localtime')
+            GROUP BY ticker
+            HAVING n >= 2
+        """).fetchall()
+    return {r["ticker"] for r in rows}
+
+
 def _update_hwm(ticker: str, new_hwm: float) -> None:
     with connect() as c:
         c.execute(
@@ -344,6 +358,10 @@ def run_fast_cycle() -> dict:
     cash = broker.cash()
     open_count = len(_get_fast_positions())
     slow_scores = {w["ticker"]: w["score"] for w in watchlist}
+    loss_blacklist = _daily_loss_blacklist()
+
+    if loss_blacklist:
+        log.info(f"Blacklist giornaliera: {len(loss_blacklist)} ticker con 2+ perdite oggi → {loss_blacklist}")
 
     log.info(f"Fast cycle: watchlist={len(watchlist)} titoli, posizioni_aperte={open_count}, "
              f"max_posizioni={cfg_m['max_fast_positions']}, cash={cash:.2f}")
@@ -353,6 +371,9 @@ def run_fast_cycle() -> dict:
     for w in watchlist:
         ticker = w["ticker"]
         if ticker in positions:
+            continue
+        if ticker in loss_blacklist:
+            log.debug(f"{ticker}: skip — 2+ perdite oggi (blacklist giornaliera)")
             continue
 
         df = data_map.get(ticker)
@@ -415,6 +436,7 @@ def run_fast_cycle() -> dict:
 
     # 3. Rotazione: sostituisce posizioni deboli con opportunità più promettenti
     if pending_signals:
+        pending_signals = [s for s in pending_signals if s["ticker"] not in loss_blacklist]
         log.info(f"Rotazione: {len(pending_signals)} candidati in attesa, verifico posizioni deboli")
         rot_sells, rot_buys = _try_rotation(pending_signals, data_map, broker, cfg_m, total_equity)
         sells += rot_sells
